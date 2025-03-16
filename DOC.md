@@ -11,7 +11,7 @@ Primitive engine is based on pygame_tools_tafh module, and is written on python 
 It is example of red circle object on the screen
 
 ```py
-from engine import *
+from engine_antiantilopa import *
 
 # Create Engine with 700x500 window
 e = Engine(Vector2d(700, 500))

@@ -9,5 +9,3 @@ from .shape import ShapeComponent, RectShapeComponent, CircleShapeComponent
 from .surface import SurfaceComponent
 from .transform import Transform
 from .vmath_mini import Vector2d, Angle
-
-print("AAAAA")
