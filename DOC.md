@@ -354,6 +354,7 @@ check if given Vector2d lies in a shape centered in transform.
 Child class of [ShapeComponent](#shape-component).
 represent circle shape.
 > CircleShapeComponent(radius: float) -> CircleShapeComponent
+> CircleShapeComponent(radius: float, need_draw: bool) -> CircleShapeComponent
 
 - [does_collide()](#circleshapecomponentdoes_collide)
 - [draw()](#circleshapecomponentdraw)
@@ -365,12 +366,14 @@ represent circle shape.
 
 **Arguments:**
 - radius (float) <br> radius of issued circle shape
+- need_draw (bool) <br> will the circle be drawn or not. Initially True
 
 **Returns:**
 - newly created *CircleShapeComponent* object
 
 **Variables:**
 - radius (float) <br> radius of issued circle shape
+- need_draw (bool) <br> will the circle be drawn or not.
 
 ### CircleShapeComponent.does_collide()
 CircleShapeComponent.does_collide(pos: Vector2d) -> bool
@@ -378,7 +381,7 @@ check if given pos lies in circle centered in transform, with known radius.
 
 ### CircleShapeComponent.draw()
 CircleShapeComponent.draw() -> None
-if game object contains [Color Component](#color-component), draws circle centered in transform, with known radius and color.
+if need_draw is True and game object contains [Color Component](#color-component), draws circle centered in transform, with known radius and color.
 
 ---
 
@@ -386,6 +389,7 @@ if game object contains [Color Component](#color-component), draws circle center
 Child class of [ShapeComponent](#shape-component).
 represent rectangle shape.
 > RectShapeComponent(size: Vector2d) -> RectShapeComponent
+> RectShapeComponent(size: Vector2d, need_draw: bool) -> RectShapeComponent
 
 - [does_collide()](#rectshapecomponentdoes_collide)
 - [draw()](#rectshapecomponentdraw)
@@ -397,12 +401,14 @@ represent rectangle shape.
 
 **Arguments:**
 - size (Vector2d) <br> width and height of issued rectangle shape
+- need_draw (bool) <br> will the rectangle be drawn or not. Initially True
 
 **Returns:**
 - newly created *RectShapeComponent* object
 
 **Variables:**
 - size (Vector2d) <br> width and height of issued rectangle shape
+- need_draw (bool) <br> will the rectangle be drawn or not.
 
 ### RectShapeComponent.does_collide()
 RectShapeComponent.does_collide(pos: Vector2d) -> bool
@@ -410,7 +416,7 @@ check if given pos lies in rectangle centered in transform, with known width and
 
 ### RectShapeComponent.draw()
 RectShapeComponent.draw() -> None
-if game object contains [Color Component](#color-component), draws rectangle centered in transform, with known width, height, and color.
+if need_draw is True and game object contains [Color Component](#color-component), draws rectangle centered in transform, with known width, height, and color.
 
 ---
 

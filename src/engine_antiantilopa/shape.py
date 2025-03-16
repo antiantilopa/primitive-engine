@@ -13,24 +13,28 @@ class ShapeComponent(Component):
         self.collide_formula = collide_formula
 
     def does_collide(self, pos: Vector2d) -> bool:
-        return self.collide_formula((pos - self.game_object.get_component(Transform).pos).complexMultiply(self.game_object.get_component(Transform).rotation.toVector2d()))
+        return self.collide_formula((pos - self.game_object.get_component(Transform).pos).complex_multiply(self.game_object.get_component(Transform).rotation.to_vector2d()))
 
     def __str__(self):
         return f""
 
 class CircleShapeComponent(ShapeComponent):
     radius: float
+    need_draw: bool
 
-    def __init__(self, radius: float) -> None:
+    def __init__(self, radius: float, need_draw: bool = True) -> None:
         def collide_formula(pos: Vector2d) -> bool:
             return (pos.x**2 + pos.y**2) <= radius**2
         super().__init__(collide_formula)
         self.radius = radius
+        self.need_draw = need_draw
 
     def does_collide(self, pos: Vector2d) -> bool:
         return self.collide_formula(pos - self.game_object.get_component(Transform).pos)
 
     def draw(self):
+        if not self.need_draw:
+            return
         if self.game_object.contains_component(ColorComponent):
             pg.draw.circle(
                 surface=self.game_object.get_component(SurfaceComponent).pg_surf, 
@@ -44,14 +48,18 @@ class CircleShapeComponent(ShapeComponent):
     
 class RectShapeComponent(ShapeComponent):
     size: Vector2d
+    need_draw: bool
 
-    def __init__(self, size: Vector2d) -> None:
+    def __init__(self, size: Vector2d, need_draw: bool = True) -> None:
         def collide_formula(pos: Vector2d) -> bool:
             return 2 * abs(pos.x) <= size.x and 2 * abs(pos.y) <= size.y
         super().__init__(collide_formula)
         self.size = size
+        self.need_draw = need_draw
 
     def draw(self):
+        if not self.need_draw:
+            return
         if self.game_object.contains_component(ColorComponent):
             pg.draw.rect(
                 surface=self.game_object.get_component(SurfaceComponent).pg_surf, 

@@ -21,5 +21,4 @@ class LabelComponent(Component):
         text = self.font.render(self.text, 1, self.game_object.get_component(ColorComponent).color)
 
         surf.pg_surf.blit(text, ((surf.size - Vector2d.from_tuple(text.get_size())) / 2).as_tuple())
-        print(text.get_size())
 
