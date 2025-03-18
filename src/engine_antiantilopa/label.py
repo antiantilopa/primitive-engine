@@ -16,6 +16,9 @@ class LabelComponent(Component):
         if font is None: font = pg.font.SysFont("consolas", 30)
         self.font = font
 
+    def set_sys_font(self, name: str, size: int, bold = 0, italic = 0):
+        self.font = pg.font.SysFont(name, size, bold, italic)
+
     def draw(self):
         surf = self.game_object.get_component(SurfaceComponent)
         text = self.font.render(self.text, 1, self.game_object.get_component(ColorComponent).color)

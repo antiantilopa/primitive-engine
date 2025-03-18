@@ -3,7 +3,7 @@ from .vmath_mini import Vector2d
 import pygame as pg
 from .shape import ShapeComponent
 from .transform import Transform
-from typing import Callable
+from typing import Callable, Any
 
 class OnClickComponent(Component):
     cmd: Callable[[GameObject, tuple[bool, bool, bool]], None]
@@ -11,13 +11,14 @@ class OnClickComponent(Component):
     listen_for_hold: bool
     on_press: bool
     previous: tuple[bool, bool, bool]
+    args: list[Any]
 
-
-    def __init__(self, listen: tuple[bool, bool, bool], listen_for_hold: bool, on_press: bool, cmd: Callable[[GameObject, tuple[bool, bool, bool]], None]):
+    def __init__(self, listen: tuple[bool, bool, bool], listen_for_hold: bool, on_press: bool, cmd: Callable[[GameObject, tuple[bool, bool, bool], list[Any]], None], *args: list[Any]):
         self.cmd = cmd
         self.listen = listen
         self.listen_for_hold = listen_for_hold
         self.on_press = on_press
+        self.args = args
         self.previous = (False, False, False)
 
     def iteration(self):
@@ -41,7 +42,7 @@ class OnClickComponent(Component):
         m_pos = self.get_relative_coord(m_pos) + GameObject.get_group_by_tag("Camera")[0].get_component(Transform).pos
 
         if self.game_object.get_component(ShapeComponent).does_collide(m_pos):
-            self.cmd(self.game_object, tmp)
+            self.cmd(self.game_object, tmp, *self.args)
 
     def get_relative_coord(self, pos: Vector2d) -> Vector2d:
         pos -= Vector2d.from_tuple(pg.display.get_window_size()) / 2

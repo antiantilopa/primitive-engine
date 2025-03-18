@@ -7,7 +7,7 @@ class Transform(Component):
 
     def __init__(self, pos: Vector2d = Vector2d(0, 0), rotation: Angle|float = 0) -> None:
         self.pos = pos
-        if rotation is float:
+        if not isinstance(rotation, Angle):
             self.rotation = Angle(rotation)
         else:
             self.rotation = rotation

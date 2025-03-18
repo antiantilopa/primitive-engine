@@ -19,10 +19,11 @@ class Engine:
         GameObject.root = screen
         screen.add_child(Camera)
 
-    def run(self):
+    def run(self, fps = 20):
         run = True
+        clock = pg.time.Clock()
         while run:
-            pg.time.delay(100)
+            clock.tick(fps)
             for event in pg.event.get(eventtype=pg.QUIT):
                 if event.type == pg.QUIT:
                     run = False
@@ -31,7 +32,8 @@ class Engine:
             pg.display.flip()
             for g_obj in GameObject.objs:
                 g_obj.get_component(SurfaceComponent).pg_surf.fill((0, 0, 0, 0))
-
+            if DEBUG:
+                print(f"fps = {clock.get_fps()}")
 
 
     def iteration(self):
@@ -52,3 +54,8 @@ class Engine:
     def update(self):
         for g_obj in GameObject.objs:
             g_obj.update()
+    
+    @staticmethod
+    def set_debug(value: bool):
+        global DEBUG
+        DEBUG = value

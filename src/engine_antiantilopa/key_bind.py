@@ -1,5 +1,5 @@
 from .game_object import GameObject, Component
-from typing import Callable
+from typing import Callable, Any
 import pygame as pg
 
 
@@ -9,14 +9,16 @@ class KeyBindComponent(Component):
     listen_for_hold: bool
     on_press: bool
     previous: list[int]
+    args: list[Any]
 
 
-    def __init__(self, listen: tuple[int], listen_for_hold: bool, on_press: bool,  cmd: Callable[[GameObject, tuple[int]], None]):
+    def __init__(self, listen: tuple[int], listen_for_hold: bool, on_press: bool,  cmd: Callable[[GameObject, tuple[int], list[Any]], None], *args: list[Any]):
         self.listen = tuple(listen)
         self.listen_for_hold = listen_for_hold
         self.on_press = on_press
         self.cmd = cmd
         self.previous = []
+        self.args = args
     
     def iteration(self):
         keys = pg.key.get_pressed()
@@ -33,6 +35,6 @@ class KeyBindComponent(Component):
             active_keys = listen_keys
         
         if len(active_keys) != 0:
-            self.cmd(self.game_object, tuple(active_keys))
+            self.cmd(self.game_object, tuple(active_keys), *self.args)
         
 
