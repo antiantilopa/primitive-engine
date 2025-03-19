@@ -14,6 +14,8 @@ class Transform(Component):
 
     def move(self, delta: Vector2d):
         self.pos += delta
+        if self.game_object.parent is not None:
+            self.game_object.parent.need_draw_set_true()
     
     def rotate(self, delta: Angle):
         self.rotation += delta

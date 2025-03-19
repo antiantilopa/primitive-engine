@@ -24,7 +24,7 @@ class Vector2d:
     def distance(self, other: "Vector2d") -> float:
         return sqrt(((self.x - other.x) ** 2) + ((self.y - other.y) ** 2))
 
-    def lenght(self) -> float:
+    def length(self) -> float:
         return sqrt((self.x ** 2) + (self.y ** 2))
 
     def intx(self) -> int:
@@ -34,7 +34,7 @@ class Vector2d:
         return int(self.y)
     
     def norm(self) -> "Vector2d":
-        l = self.lenght()
+        l = self.length()
         if l == 0:
             return Vector2d(0, 0)
         return Vector2d(self.x / l, self.y / l)

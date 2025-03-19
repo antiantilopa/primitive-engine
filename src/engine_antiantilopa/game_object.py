@@ -21,6 +21,8 @@ class GameObject:
     components: list[Component]
     childs: list["GameObject"]
     parent: "GameObject"
+    need_draw: bool
+    need_blit: bool
     active: bool
 
     root: "GameObject" = None
@@ -32,6 +34,8 @@ class GameObject:
         self.childs = []
         self.parent = None
         self.active = True
+        self.need_draw = True
+        self.need_blit = True
         GameObject.objs.append(self)
         if isinstance(tags, str):
             tag = tags
@@ -86,7 +90,7 @@ class GameObject:
             component.iteration()
 
     def draw(self):
-        if not self.active:
+        if not self.active or not self.need_draw:
             return
         for component in self.components:
             component.draw()
@@ -107,6 +111,12 @@ class GameObject:
         self.active = False
         for child in self.childs:
             child.disable()
+
+    def need_draw_set_true(self):
+        self.need_draw = True
+        self.need_blit = True
+        if self.parent is not None:
+            self.parent.need_draw_set_true()
 
     def destroy(self):
         for child in self.childs:

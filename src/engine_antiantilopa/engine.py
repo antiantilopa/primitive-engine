@@ -27,11 +27,14 @@ class Engine:
             for event in pg.event.get(eventtype=pg.QUIT):
                 if event.type == pg.QUIT:
                     run = False
-            self.iteration()
             self.draw()
+            self.iteration()
             pg.display.flip()
             for g_obj in GameObject.objs:
-                g_obj.get_component(SurfaceComponent).pg_surf.fill((0, 0, 0, 0))
+                for child in g_obj.childs:
+                    if child.need_draw:
+                        g_obj.get_component(SurfaceComponent).pg_surf.fill((0, 0, 0, 0))
+                        break
             if DEBUG:
                 print(f"fps = {clock.get_fps()}")
 
@@ -43,13 +46,25 @@ class Engine:
     def draw(self):
         for g_obj in GameObject.objs:
             g_obj.draw()
-        def blit(g_obj: GameObject):
+        window_size = GameObject.root.get_component(SurfaceComponent).size
+        camera_pos = Camera.get_component(Transform).pos
+        def blit(g_obj: GameObject, abs_pos: Vector2d):
             for child in g_obj.childs:
-                blit(child)
+                if child.need_blit is False:
+                    continue
+                dist = (window_size + child.get_component(SurfaceComponent).size)
+                if (abs_pos + child.get_component(Transform).pos - camera_pos + dist / 2).is_in_box(Vector2d(0, 0), dist):
+                    blit(child, abs_pos + child.get_component(Transform).pos)
             if not (g_obj in GameObject.get_group_by_tag("Camera")):
-                g_obj.get_component(SurfaceComponent).blit()
-        blit(GameObject.root)
-        GameObject.get_group_by_tag("Camera")[0].get_component(SurfaceComponent).blit()
+                if g_obj.need_blit:
+                    g_obj.get_component(SurfaceComponent).blit()
+                    g_obj.need_blit = False
+        blit(GameObject.root, Vector2d(0, 0))
+
+        for g_obj in GameObject.objs:
+            g_obj.need_draw = False
+
+        Camera.get_component(SurfaceComponent).blit()
     
     def update(self):
         for g_obj in GameObject.objs:

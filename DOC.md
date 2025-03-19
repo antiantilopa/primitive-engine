@@ -31,7 +31,7 @@ GameObject.root.add_child(world)
 # Create Game object with Coords <0, 0>, red color, and surface 500x500
 button = GameObject("button")
 
-button.add_component(CircleComponent(100))
+button.add_component(CircleShapeComponent(100))
 button.add_component(Transform(Vector2d(0, 0)))
 button.add_component(ColorComponent((255, 0, 0)))
 button.add_component(SurfaceComponent(Vector2d(500, 500)))
@@ -58,6 +58,7 @@ e.run()
 - [On Click Component](#on-click-component)
 - [Key Bind Component](#key-bind-component)
 - [Label Component](#label-component)
+- [Camera](#camera)
 - [Vector Math](#vector-math)
 - - [Vector2d](#vector2d)
 - - [Angle](#angle)
@@ -92,7 +93,7 @@ calls [iteration()](#game-objectiteration) method from all [game objects](#game-
 
 ### Engine.draw()
 Engine.draw() -> None
-calls [draw()](#game-objectdraw) method from all game objects and blit all surfaces according to geneology tree.
+calls [draw()](#game-objectdraw) method from all game objects and blit all surfaces, whose need_blit is True, according to geneology tree.
 
 ### Engine.update()
 Engine.update() -> None
@@ -128,6 +129,7 @@ object for all game "objects"
 - [disable()](#gameobjectdisable)
 - [destroy()](#gameobjectdestroy)
 - [show_geneology_tree()](#gameobjectshow_geneology_tree)
+- [need_draw_set_true()](#gameobjectneed_draw_set_true)
 <br>
 
 The *GameObject* class is a kind of container for [components](#component). It can be accessed by its tags. Default init creates empty GameObject without tags. For Gameobjects, [Transform](#transform) and [Surface](#surface-component) Components are necessary.
@@ -144,6 +146,8 @@ The *GameObject* class is a kind of container for [components](#component). It c
 - childs (list[[GameObject](#game-object)]) <br> all game objects binded to the game object.
 - parent ([GameObject](#game-object)) <br> a game object that the game object is binded to.
 - active (bool) <br> state of the game object. If not active, it will not iterate or be drawn on screen.
+- need_draw (bool) <br> flag variable. if true, game object will be drawn.
+- need_blit (bool) <br> flag variable. if true and game object is on screen (absolute cordinates touches screen), game object will be blit.
 
 **Static Variables:**
 - root ([GameObject](#game-object)) <br> root game object representing screen. all gameobject have to be chained to it to be drawn. 
@@ -176,19 +180,19 @@ checks if the game object has component of given type.
 
 ### GameObject.get_childs()
 GameObject.get_childs(tag: str) -> list\[[GameObject](#game-object)]
-returns all childs of the components with a given tag
+returns all childs of the components with a given tag.
 
 ### GameObject.iteration()
 GameObject.iteration() -> None
-calls iteration() method for all components of the game object
+calls iteration() method for all components of the game object.
 
 ### GameObject.draw()
 GameObject.draw() -> None
-calls draw() method for all components of the game object
+if need_draw and acive are both True, calls draw() method for all components of the game object.
 
 ### GameObject.update()
 GameObject.update() -> None
-calls iteration() and draw() methods for all components of the game object
+calls iteration() and draw() methods for all components of the game object.
 
 ### GameObject.enable()
 GameObject.enable() -> None
@@ -197,6 +201,12 @@ sets acrive variable equal to True and enables all game objects chained to this 
 ### GameObject.disable()
 GameObject.disable() -> None
 sets acrive variable equal to False and disables all game objects chained to this game object.
+
+### GameObject.need_draw_set_true()
+GameObject.need_draw_set_true() -> None
+Sets need_draw *and need_blit* (!) equal to true, and if parent exists, calls *need_draw_set_true()* method for parent.
+> [!WARNING]
+> changing need_draw or need_blit manually, can cause unexpected errors.
 
 ### GameObject.destroy()
 GameObject.destroy() -> None
@@ -258,11 +268,11 @@ object for representing position and rotation in 2 dimensions.
 
 ### Transform.move()
 Transform.move(delta: Vector2d) -> None
-changes position with given delta.
+changes position with given delta. Calls *need_draw_set_true()* for parent game object
 
 ### Transform.rotate()
 Transform.rotate(delta: Angle) -> None
-changes rotation with given delta
+changes rotation with given delta. **Not working now !!!**
 
 ### Transform.set_pos()
 Transform.set_pos(pos: Vector2d) -> None
@@ -534,6 +544,25 @@ Sets font to *pygame.font.SysFont(name, size, bold, italic)*
 
 ---
 
+# Camera
+a [GameObject](#game-object) object representing camera.
+
+**Tags:**
+- "Camera"
+
+**Components:**
+- [Transform](#transform) <br> at <0, 0> with rotation = 0
+- [SurfaceComponent](#surface-component) <br> with size <500, 500>
+
+#### bind_keys_for_camera_movement()
+bind_keys_for_camera_movement(keys: tuple[int, int, int, int] = (pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d), speed: float = 10) -> None
+function ***(not a method!)*** that binds 4 keyboard keys on camera's movement with given speed for up, left, down, right respectively. 
+
+> [!NOTE]  
+> When camera goes in one dirrection, on screen, game objects, that are not binded to camera, will look like moving opposite way.
+
+---
+
 # Vector math
 Vector math is a module used for 2d calculations. Primitive engine uses vector math mini with only Vector2d and Angle.
 
@@ -547,7 +576,7 @@ Class to represent a pair of floats.
 - [from_tuple()](#Vector2dfrom_tuple)
 - [as_tuple()](#Vector2das_tuple)
 - [distance()](#Vector2ddistance)
-- [lenght()](#Vector2dlenght)
+- [length()](#vector2dlength)
 - [norm()](#Vector2dnorm)
 - [intx()](#Vector2dintx)
 - [inty()](#Vector2dinty)
@@ -592,17 +621,17 @@ returns tuple (x, y).
 
 ### Vector2d.distance()
 Vector2d.distance(other: Vector2d) -> float
-returns euclidic lenght of vectors' differences.
-d<sup>2</sup> = x<sup>2</sup> + y<sup>2</sup>
+returns euclidic length of vectors' differences.
+distance<sup>2</sup> = (x<sub>1</sub> - x<sub>2</sub>)<sup>2</sup> + (y<sub>1</sub> - y<sub>2</sub>)<sup>2</sup>
 
-### Vector2d.lenght()
-Vector2d.lenght() -> float
-returns euclidic lenght of vetor.
-d<sup>2</sup> = x<sup>2</sup> + y<sup>2</sup>
+### Vector2d.length()
+Vector2d.length() -> float
+returns euclidic length of vetor.
+length<sup>2</sup> = x<sup>2</sup> + y<sup>2</sup>
 
 ### Vector2d.norm()
 Vector2d.norm() -> Vector2d
-returns normalized (lenght = 1) Vector2d with same direction.
+returns normalized (length = 1) Vector2d with same direction.
 if Vector2d is **0**, returns **0**
 
 ### Vector2d.intx()
@@ -640,13 +669,13 @@ returns True if **self** is in rect such that **other1** and **other2** are corn
 ### Vector2d.complex_multiply()
 Vector2d.complex_multiply(other: Vector2d) -> Vector2d
 multiplies vectors as if Vector2d(a, b) = a + bi.
-resulting **vector**'s lenght is product of **self** and **other** lenghts.
+resulting **vector**'s length is product of **self** and **other** lengths.
 resulting **vector**'s angle is sum of **self** and **other** angles.
 
 ### Vector2d.dot_multiply()
 Vector2d.dot_multiply(other: Vector2d) -> float
 returns value of dot multiplication of vectors.
-resulting value is product of **self** and **other** lenghts with cosine of angle between **self** and **other**.
+resulting value is product of **self** and **other** lengths with cosine of angle between **self** and **other**.
 
 ### Vector2d.operation()
 Vector2d.operation(other: Vector2d, operation: Callable\[\[float, float], float]) -> Vector2d
@@ -694,6 +723,6 @@ module divides angle by 2pi
 
 ### Angle.toVector2d()
 Angle.to_vector2d() -> Vector2d
-returns Vector2d with lenght equal to 1 and direction equal to angle
+returns Vector2d with length equal to 1 and direction equal to angle
 
 ---
