@@ -6,14 +6,14 @@ from .transform import Transform
 from typing import Callable, Any
 
 class OnClickComponent(Component):
-    cmd: Callable[[GameObject, tuple[bool, bool, bool]], None]
+    cmd: Callable[[GameObject, tuple[bool, bool, bool], Vector2d, list[Any]], None]
     listen: tuple[bool, bool, bool]
     listen_for_hold: bool
     on_press: bool
     previous: tuple[bool, bool, bool]
     args: list[Any]
 
-    def __init__(self, listen: tuple[bool, bool, bool], listen_for_hold: bool, on_press: bool, cmd: Callable[[GameObject, tuple[bool, bool, bool], list[Any]], None], *args: list[Any]):
+    def __init__(self, listen: tuple[bool, bool, bool], listen_for_hold: bool, on_press: bool, cmd: Callable[[GameObject, tuple[bool, bool, bool], Vector2d, list[Any]], None], *args: list[Any]):
         self.cmd = cmd
         self.listen = listen
         self.listen_for_hold = listen_for_hold
@@ -42,7 +42,7 @@ class OnClickComponent(Component):
         m_pos = self.get_relative_coord(m_pos) + GameObject.get_group_by_tag("Camera")[0].get_component(Transform).pos
 
         if self.game_object.get_component(ShapeComponent).does_collide(m_pos):
-            self.cmd(self.game_object, tmp, *self.args)
+            self.cmd(self.game_object, tmp, m_pos, *self.args)
 
     def get_relative_coord(self, pos: Vector2d) -> Vector2d:
         pos -= Vector2d.from_tuple(pg.display.get_window_size()) / 2

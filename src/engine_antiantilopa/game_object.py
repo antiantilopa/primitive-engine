@@ -12,7 +12,10 @@ class Component:
         pass
 
     def __str__(self):
-        return f""
+        return f"{self.__class__.__name__}"
+    
+    def __repr__(self):
+        return f"{self.__class__.__name__}"
 
 T = TypeVar("T", bound=Component)
 
@@ -135,4 +138,7 @@ class GameObject:
             GameObject.show_geneology_tree(child, depth + 1)
 
     def __str__(self):
-        return f"GameObject: tags:{self.tags}, components: {self.components}, childs: {self.childs}"
+        return f"GameObject: tags:{self.tags}, components: {self.components}"
+
+    def __repr__(self):
+        return f"GameObject: tags:{self.tags}, components: {self.components}"

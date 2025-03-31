@@ -75,6 +75,7 @@ main object of programm
 - [run()](#enginerun)
 - [update()](#engineupdate)
 - [set_debug()](#engineset_debug)
+- [forced_blit()](#engineforced_blit)
 <br>
 The *Engine* class gathers and launches all code at once. Default init creates window size equal to size of display.
 
@@ -106,6 +107,10 @@ runs pygame application with given frame rate in a loop until window quit or err
 ### Engine.set_debug()
 Engine.set_debug(value: bool) -> None
 Static method. Sets global DEBUG variable equal to value.
+
+### Engine.forced_blit()
+Engine.draw() -> None
+Blits all surfaces, according to geneology tree.
 
 ---
 
@@ -287,7 +292,7 @@ sets (self.)rotation equal to given rotation
 # Surface Component
 Child class of [Component](#component).
 object for representing surface where everything is drawn.
-> SurfaceComponent(size: Vector2d) -> SurfaceComponent
+> SurfaceComponent(size: Vector2d, crop: bool = True) -> SurfaceComponent
 
 - [blit()](#surfacecomponentblit)
 <br>
@@ -298,6 +303,7 @@ object for representing surface where everything is drawn.
 
 **Arguments:**
 - size (Vector2d) <br> size of surface and game object.
+- crop (bool) <br> flag: whether or not the surface should be cropped by parent surface. Initially True
 
 **Returns:**
 - newly created *SurfaceComponent* object.
@@ -305,6 +311,7 @@ object for representing surface where everything is drawn.
 **Variables:**
 - size: Vector2d <br> size of surface and game object.
 - pg_surf: pygame.Surface <br> actual pygame surface where child game objects will be drawn
+- crop (bool) <br> flag: whether or not the surface should be cropped by parent surface. When True, it is much easier for computer to run the game
 
 ### SurfaceComponent.blit()
 SurfaceComponent.blit() -> None
@@ -438,7 +445,7 @@ if need_draw is True and game object contains [Color Component](#color-component
 # On Click Component
 Child class of [Component](#component).
 object for listening for mouse clicks and responding to them.
-> OnClickComponent(listen: tuple\[bool, bool, bool], listen_for_hold: bool, on_press: bool, cmd: Callable\[\[[GameObject](#game-object), tuple\[bool, bool, bool], list\[Any]], None], *args: list\[Any]) -> OnClickComponent
+> OnClickComponent(listen: tuple\[bool, bool, bool], listen_for_hold: bool, on_press: bool, cmd: Callable\[\[[GameObject](#game-object), tuple\[bool, bool, bool], Vector2d,  list\[Any]], None], *args: list\[Any]) -> OnClickComponent
 
 - [iteration()](#onclickcomponentiteration)
 - [get_relative_coord()](#onclickcomponentget_relative_coord)
@@ -452,7 +459,7 @@ object for listening for mouse clicks and responding to them.
 - listen (tuple\[bool, bool, bool]) <br> tuple with 3 booleans each representing whether or not should it be listened for left, center, or right mouse buttons respectively.
 - listen_for_holds (bool) <br> boolean representing should it be triggered by mouse buttons changes (False) or it being held (True).
 - on_press (bool) <br> boolean representing should it be triggered by mouse button release (False) or mouse button push (True). Does not affect if listen_for_holds is True
-- cmd (Callable\[\[[GameObject](#game-object), tuple\[bool, bool, bool]], None]) <br> callable function which will be called when mouse button pressed and all requirements satisfied. First argument - game object whose OnliclkComponent was triggered; Second argument - tuple\[bool, bool, bool] which mouse button (left, center or right) triggered OnliclkComponent.
+- cmd (Callable\[\[[GameObject](#game-object), tuple\[bool, bool, bool], Vector2d,  list\[Any]], None]) <br> callable function which will be called when mouse button pressed and all requirements satisfied. First argument - game object whose OnliclkComponent was triggered; Second argument - tuple\[bool, bool, bool] which mouse button (left, center or right) triggered OnliclkComponent; Third argument - Vector2d position of mouse relative to the center of the game object 
 - *args (list\[Any]) <br> arguments that will be given to cmd function. Initially empty
 
 **Returns:**
@@ -726,3 +733,150 @@ Angle.to_vector2d() -> Vector2d
 returns Vector2d with length equal to 1 and direction equal to angle
 
 ---
+
+# Tips
+
+### 1. Use chunks
+
+since 0.0.7 update every game object which has need_blit equal true and whose surface does not *touch* the camera view, is checked to *touch* the camera view every frame. Thus, if there is a lot of game objects outside of camera view, or just very far away, it is better to create a *chunk* game object that will contain other game objects as its childs. This is computationaly easier because now engine will check only if it *touches* the chunk.
+
+#### Example:
+
+```py
+from src.engine_antiantilopa import *
+
+
+# Create Engine with 700x500 window
+e = Engine(Vector2d(700, 500))
+e.set_debug(1)
+
+# Bind keys for movement of camera (Default wasd)
+bind_keys_for_camera_movement()
+
+# Create Game object with Coords <0, 0> and surface 500x500
+world = GameObject("world")
+world.add_component(Transform(Vector2d(0, 0)))
+world.add_component(SurfaceComponent(Vector2d(1500, 1500)))
+GameObject.root.add_child(world)
+
+# Create 16 x 16 chunks each containing 16 x 16 buttons
+for i in range(16):
+    for j in range(16):
+        chunk = GameObject(["chunk", f"{i}/{j}"])
+        chunk.add_component(Transform(Vector2d(i * 3 * 16 - (256 * 3 / 2), j * 3 * 16 - (256 * 3 / 2))))
+        chunk.add_component(SurfaceComponent(Vector2d(3 * 16 + 2, 3 * 16 + 2)))
+        # in Vector2d(3 * 16 + 2, 3 * 16 + 2)),  '+ 2' part is needed for the upper and left border of the chunk. 
+        # However, I don't know why it is so.
+        world.add_child(chunk)
+# Create 256 x 256 buttons
+for i in range(256):
+    for j  in range(256):
+        button = GameObject("button")
+
+        button.add_component(RectShapeComponent(Vector2d(2, 2)))
+        button.add_component(Transform(Vector2d((i % 16) * 3 - 3 * 8, (j % 16) * 3 - 3 * 8)))
+        button.add_component(ColorComponent((i % 256, j % 256, 128)))
+        button.add_component(SurfaceComponent(Vector2d(2, 2), 1))
+
+        # Find to which chunk the button is assigned to
+        ch = GameObject.get_group_by_tag(f"{i // 16}/{j // 16}")[0]
+        ch.add_child(button)
+
+#run engine
+e.run(120)
+```
+
+and I (on my relatively good laptop) got approximately ```fps = 17.5``` which is (in my opinion) good result for python code. Try to launch code without chunk separation
+
+### 2. Blit game objects from the start
+
+Another way to tackle the issue mentioned in first tip, is blit all game objects on start, so the loading of programm is little bit slower, but frame rate is higher. This, however, works only if objects are static (need_blit = False and almost never a lot of them get True). 
+
+#### Example:
+
+```py
+from src.engine_antiantilopa import *
+
+
+# Create Engine with 700x500 window
+e = Engine(Vector2d(700, 500))
+e.set_debug(1)
+
+# Bind keys for movement of camera (Default wasd)
+bind_keys_for_camera_movement()
+
+# Create Game object with Coords <0, 0> and surface 500x500
+world = GameObject("world")
+world.add_component(Transform(Vector2d(0, 0)))
+world.add_component(SurfaceComponent(Vector2d(1500, 1500)))
+world.add_component(RectShapeComponent(Vector2d(1500, 1500), need_draw=False))
+GameObject.root.add_child(world)
+
+# Create 256 x 256 buttons
+for i in range(256):
+    for j  in range(256):
+        button = GameObject("button")
+
+        button.add_component(RectShapeComponent(Vector2d(2, 2)))
+        button.add_component(Transform(Vector2d(i * 3 - 128 * 3, j * 3 - 128 * 3)))
+        button.add_component(ColorComponent((i % 256, j % 256, 128)))
+        button.add_component(SurfaceComponent(Vector2d(2, 2), 1))
+        # Find to which chunk the button is assigned to
+        world.add_child(button)
+
+e.draw()
+e.forced_blit()
+
+#run engine
+e.run(120)
+```
+
+Its results as ```fps = 22``` is very good, but it works only because there is no animation or other thing on those game objects. It is highly recommended to use first tip anyway. It is also possible to use first and second tips together.
+
+### 3. Assign the least number of OnClickComponents 
+
+If you have a lot of buttons in some pattern, it is much better to wrap them in one game object and add on click component only to it, with checking which button was clicked in function (cmd) itself. It is possible since 0.0.7 when *mouse_pos* argument to cmd was added. This is computationaly easier because after click, engine will check only one game object for interceptoin, not a big amount.
+
+#### Example:
+
+```py
+from src.engine_antiantilopa import *
+
+
+# Create Engine with 700x500 window
+e = Engine(Vector2d(700, 500))
+
+# Bind keys for movement of camera (Default wasd)
+bind_keys_for_camera_movement()
+
+# Create Game object with Coords <0, 0> and surface 500x500
+world = GameObject("world")
+world.add_component(Transform(Vector2d(0, 0)))
+world.add_component(SurfaceComponent(Vector2d(1500, 1500)))
+world.add_component(RectShapeComponent(Vector2d(1500, 1500), need_draw=False))
+
+# create cmd where we check where on world the mouse is clicked.
+def cmd(game_object: GameObject, active_keys: tuple[int, int, int], mouse_pos: Vector2d, *args):
+    print(f"color = <{int(mouse_pos.x // 3 + 128)}, {int(mouse_pos.y // 3 + 128)}, {128}>")
+
+world.add_component(OnClickComponent((1, 0, 0), 1, 0, cmd))
+
+GameObject.root.add_child(world)
+
+# Create 256 x 256 buttons
+for i in range(256):
+    for j  in range(256):
+        button = GameObject("button")
+
+        button.add_component(RectShapeComponent(Vector2d(2, 2)))
+        button.add_component(Transform(Vector2d(i * 3 - 128 * 3, j * 3 - 128 * 3)))
+        button.add_component(ColorComponent((i % 256, j % 256, 128)))
+        button.add_component(SurfaceComponent(Vector2d(2, 2), 1))
+        # Find to which chunk the button is assigned to
+        world.add_child(button)
+
+#run engine
+e.run(120)
+```
+
+As it could be seen, after a click, there is no freezes that would occur when clicked.
