@@ -4,11 +4,22 @@ DEBUG = False
 
 class Component:
     game_object: "GameObject"
+    component_classes: list[type["Component"]] = []
+
+    def __init_subclass__(cls):
+        Component.component_classes.append(cls)
 
     def iteration(self):
         pass
 
+    def first_iteration(self):
+        pass
+
     def draw(self):
+        pass
+
+    @staticmethod
+    def refresh():
         pass
 
     def __str__(self):
@@ -16,6 +27,9 @@ class Component:
     
     def __repr__(self):
         return f"{self.__class__.__name__}"
+
+    def destroy(self):
+        pass
 
 T = TypeVar("T", bound=Component)
 
@@ -86,6 +100,12 @@ class GameObject:
                 result.append(child)
         return result
 
+    def first_iteration(self):
+        if not self.active:
+            return
+        for component in self.components:
+            component.first_iteration()
+
     def iteration(self):
         if not self.active:
             return
@@ -96,13 +116,6 @@ class GameObject:
         if not self.active or not self.need_draw:
             return
         for component in self.components:
-            component.draw()
-
-    def update(self):
-        if not self.active:
-            return
-        for component in self.components:
-            component.iteration()
             component.draw()
 
     def enable(self):
@@ -117,11 +130,17 @@ class GameObject:
 
     def need_draw_set_true(self):
         self.need_draw = True
-        self.need_blit = True
         if self.parent is not None:
             self.parent.need_draw_set_true()
+    
+    def need_blit_set_true(self):
+        self.need_blit = True
+        if self.parent is not None:
+            self.parent.need_blit_set_true()
 
     def destroy(self):
+        for component in self.components:
+            component.destroy()
         for child in self.childs:
             child.destroy()
         GameObject.objs.remove(self)

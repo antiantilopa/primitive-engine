@@ -23,7 +23,7 @@ def bind_keys_for_camera_movement(keys: tuple[int, int, int, int] = (pg.K_w, pg.
         if keys[3] in active_keys:
             g_obj.get_component(Transform).move(Vector2d(+speed, 0))
         for child in GameObject.root.childs:
-            child.need_draw_set_true()
+            child.need_blit_set_true()
         if DEBUG:
             print(g_obj.get_component(Transform).pos)
 

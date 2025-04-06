@@ -71,6 +71,7 @@ main object of programm
 > Engine(window_size: Vector2d) -> Engine
 
 - [draw()](#enginedraw)
+- [first_iteration()](#enginefirst_iteration)
 - [iteration()](#engineiteration)
 - [run()](#enginerun)
 - [update()](#engineupdate)
@@ -88,21 +89,29 @@ The *Engine* class gathers and launches all code at once. Default init creates w
 **Variables:**
 - no parameters
 
+### Engine.first_iteration()
+Engine.first_iteration() -> None
+Calls [first_iteration()](#gameobjectfirst_iteration) method from all [game objects](#game-object).
+
 ### Engine.iteration()
 Engine.iteration() -> None
-calls [iteration()](#game-objectiteration) method from all [game objects](#game-object).
+Calls [iteration()](#gameobjectiteration) method from all [game objects](#game-object).
 
 ### Engine.draw()
 Engine.draw() -> None
-calls [draw()](#game-objectdraw) method from all game objects and blit all surfaces, whose need_blit is True, according to geneology tree.
+First, all surfaces that need to be cleared are cleared. The need is defined as whether one of oncomers need_blit is equal true, and it is in camera view, or game object need_draw is true. Then, calls [draw()](#gameobjectdraw) method from all game objects. After, it blits all surfaces, whose need_blit is True and is in camera view, according to oncoming preference. The way it works is that: child object is always higher than its parent. game objects that are not in camera view does not blit, so need_blit does not change.
 
-### Engine.update()
+### Engine.refresh()
 Engine.update() -> None
-calls [update()](#game-objectupdate) methos from all game objects.
+Calls [refresh()](#compomemtrefresh) method from all component classes.
 
 ### Engine.run()
 Engine.run(fps: float) -> None
-runs pygame application with given frame rate in a loop until window quit or error occur.
+runs pygame application with given frame rate in a loop until window quit or error occur. Before main loop, *first_iteration()* method is called. In the loop, the methods are called in the given order:
+1. iteration()
+2. draw()
+3. refresh()
+4. pygame.display.flip()
 
 ### Engine.set_debug()
 Engine.set_debug(value: bool) -> None
@@ -110,7 +119,7 @@ Static method. Sets global DEBUG variable equal to value.
 
 ### Engine.forced_blit()
 Engine.draw() -> None
-Blits all surfaces, according to geneology tree.
+calls iteration(), calls [draw()](#gameobjectdraw) from all game objects, then blits all surfaces, according to oncoming preference (as in draw()).
 
 ---
 
@@ -127,14 +136,15 @@ object for all game "objects"
 - [get_component()](#gameobjectget_component)
 - [contains_component()](#gameobjectcontains_component)
 - [get_childs()](#gameobjectget_childs)
+- [first_iteration()](#gameobjectfirst_iteration)
 - [iteration()](#gameobjectiteration)
 - [draw()](#gameobjectdraw)
-- [update()](#gameobjectupdate)
 - [enable()](#gameobjectenable)
 - [disable()](#gameobjectdisable)
 - [destroy()](#gameobjectdestroy)
 - [show_geneology_tree()](#gameobjectshow_geneology_tree)
 - [need_draw_set_true()](#gameobjectneed_draw_set_true)
+- [need_blit_set_true()](#gameobjectneed_blit_set_true)
 <br>
 
 The *GameObject* class is a kind of container for [components](#component). It can be accessed by its tags. Default init creates empty GameObject without tags. For Gameobjects, [Transform](#transform) and [Surface](#surface-component) Components are necessary.
@@ -187,17 +197,17 @@ checks if the game object has component of given type.
 GameObject.get_childs(tag: str) -> list\[[GameObject](#game-object)]
 returns all childs of the components with a given tag.
 
+### GameObject.first_iteration()
+GameObject.first_iteration() -> None
+Calls [first_iteration()](#componentfirst_iteration) method for all components of the game object.
+
 ### GameObject.iteration()
 GameObject.iteration() -> None
-calls iteration() method for all components of the game object.
+Calls [iteration()](#componentiteration) method for all components of the game object.
 
 ### GameObject.draw()
 GameObject.draw() -> None
-if need_draw and acive are both True, calls draw() method for all components of the game object.
-
-### GameObject.update()
-GameObject.update() -> None
-calls iteration() and draw() methods for all components of the game object.
+if need_draw and acive are both True, calls [draw()](#componentdraw) method for all components of the game object.
 
 ### GameObject.enable()
 GameObject.enable() -> None
@@ -209,9 +219,14 @@ sets acrive variable equal to False and disables all game objects chained to thi
 
 ### GameObject.need_draw_set_true()
 GameObject.need_draw_set_true() -> None
-Sets need_draw *and need_blit* (!) equal to true, and if parent exists, calls *need_draw_set_true()* method for parent.
+Sets need_draw equal to true, and if parent exists, calls *need_draw_set_true()* method for parent.
+
+### GameObject.need_blit_set_true()
+GameObject.need_blit_set_true() -> None
+Sets need_blit equal to true, and if parent exists, calls *need_blit_set_true()* method for parent.
+
 > [!WARNING]
-> changing need_draw or need_blit manually, can cause unexpected errors.
+> changing *need_draw* or *need_blit* manually, can cause unexpected errors.
 
 ### GameObject.destroy()
 GameObject.destroy() -> None
@@ -223,8 +238,11 @@ destroys game object and all childs and components of the game object. Removes i
 base class for other components in game. Not used directly.
 > Component() -> Component
 
+- [fisrt_iteration()](#componentfirst_iteration)
 - [iteration()](#componentiteration)
 - [draw()](#componentdraw)
+- [refresh()](#componentrefresh)
+- [destroy()](#componentdestroy)
 <br>
 
 **Arguments:**
@@ -233,8 +251,15 @@ base class for other components in game. Not used directly.
 **Returns:**
 - no returns
 
-**variables:**
+**Variables:**
 - game_object ([GameObject](#game-object)) <br> game_object that contains the component
+
+**Static Variables:**
+- component_classes (list\[type\[Component]]) <br> list of all classes that inherited from Component
+
+### Component.first_iteration()
+Component.first_iteration() -> None
+does nothing
 
 ### Component.iteration()
 Component.iteration() -> None
@@ -242,6 +267,14 @@ does nothing
 
 ### Component.draw()
 Component.draw() -> None
+does nothing
+
+### Component.refresh()
+Component.refresh() -> None
+Static method. does nothing
+
+### Component.destroy()
+Component.destroy() -> None
 does nothing
 
 ---
@@ -254,10 +287,13 @@ object for representing position and rotation in 2 dimensions.
 > Transform(rotation: Angle|float) -> Transform
 > Transform(pos: Vector2d, rotation: Angle|float) -> Transform
 
+- [first_iteration](#transformfirst_iteration)
 - [move()](#transformmove)
 - [rotate()](#transformrotate)
 - [set_pos()](#transformset_pos)
-- [set_rotation](#transformset_rotation)
+- [set_rotation()](#transformset_rotation)
+- [update_abs_pos()](#transformupdate_abs_pos)
+- [refresh()](#transformrefresh)
 <br>
 
 **Arguments:**
@@ -268,24 +304,42 @@ object for representing position and rotation in 2 dimensions.
 - newly created Transform component.
 
 **Variables:**
-- pos (Vector2d) <br> position of the **center** of the game object.
+- pos (Vector2d) <br> position of the **center** of the game object relative to its parent's **center**.
+- abs_pos (Vector2d) <br> position of **center** of the game object relative to main screen's **center**.
 - rotation (Angle) <br> angle of the gameobject.
+- changed (bool) <br> flag variable. Shows whether Trnasform has changed. Initially False
+
+**Static Variables:**
+- objs (list\[Transform]) <br> list of all Transform instances.
+
+### Transform.first_iteration()
+Transform.first_iteration() -> None
+Finds abs_pos for all Transform instances.
 
 ### Transform.move()
 Transform.move(delta: Vector2d) -> None
-changes position with given delta. Calls *need_draw_set_true()* for parent game object
+Changes *pos* with given delta, sets *changed* equal to True. Calls [need_blit_set_true()](#gameobjectneed_blit_set_true) for the game object. Calls *update_abs_pos()* for self.
 
 ### Transform.rotate()
 Transform.rotate(delta: Angle) -> None
-changes rotation with given delta. **Not working now !!!**
+Changes *rotation* with given delta. **Not working now !!!**
 
 ### Transform.set_pos()
 Transform.set_pos(pos: Vector2d) -> None
-sets position equal to pos
+Sets *pos* equal to pos, sets *changed* equal to True. Calls [need_blit_set_true()](#gameobjectneed_blit_set_true) for the game object. Calls *update_abs_pos()* for self.
+
 
 ### Transform.set_rotation()
 Transform.set_rotation(rotation: Angle) -> None
-sets (self.)rotation equal to given rotation
+Sets *rotation* equal to given rotation. **Not working now !!!**
+
+### Transform.update_abs_pos()
+Transform.update_abs_pos(abs_pos: Vector2d) -> None
+Sets *abs_pos* equal to given abs_pos + *pos*. Calls update_abs_pos(*abs_pos*) from all childs of the game object.
+
+### Transform.refresh()
+Transform.refresh() -> None
+Static method. Sets *changed* equal to False for all instances of Transform.
 
 ---
 
@@ -294,7 +348,12 @@ Child class of [Component](#component).
 object for representing surface where everything is drawn.
 > SurfaceComponent(size: Vector2d, crop: bool = True) -> SurfaceComponent
 
+- [first_iteration()](#surfacecomponentfirst_iteration)
 - [blit()](#surfacecomponentblit)
+- [update_oncoming()](#surfacecomponentupdate_oncoming)
+- [add_oncoming()](#surfacecomponentadd_oncoming)
+- [remove_oncoming()](#surfacecomponentremove_oncoming)
+- [destroy()](#surfacecomponentdestroy)
 <br>
 
 **Requirements:**
@@ -303,7 +362,7 @@ object for representing surface where everything is drawn.
 
 **Arguments:**
 - size (Vector2d) <br> size of surface and game object.
-- crop (bool) <br> flag: whether or not the surface should be cropped by parent surface. Initially True
+- crop (bool) <br> flag variable. shows whether or not the surface should be cropped by parent surface. Initially True.
 
 **Returns:**
 - newly created *SurfaceComponent* object.
@@ -312,11 +371,33 @@ object for representing surface where everything is drawn.
 - size: Vector2d <br> size of surface and game object.
 - pg_surf: pygame.Surface <br> actual pygame surface where child game objects will be drawn
 - crop (bool) <br> flag: whether or not the surface should be cropped by parent surface. When True, it is much easier for computer to run the game
+- depth (int) <br> shows to which depth it needs to "fall". equal 1 if *crop*.
+- oncoming (list\[[GameObject](#game-object)]) <br> list of game objects that will be blit on the surface
+
+### SurfaceComponent.first_iteration()
+SurfaceComponent.first_iteration() -> None
+Tries to find where each surface should be blit. If *crop*, then it will blit on parent even if it is not fully inside it.
 
 ### SurfaceComponent.blit()
 SurfaceComponent.blit() -> None
-blits the surface to parent surface.
-if game object is root, nothing happens. (because root has not parent game object)
+Blits the surface to parent surface. If game object is root, nothing happens. (because root has not parent game object). If someone under the surface changed its position ([Transform.changed](#transform)), calls *update_oncoming()*
+
+### SurfaceComponent.update_oncoming()
+SurfaceComponent.update_oncoming() -> tuple\[Vector2d, SurfaceComponent]
+Updates *depth* of the Surface component, so that it will blit without crops. Returns position relative to the game object that surface will blit on, and its Surface component.
+
+### SurfaceComponent.add_oncoming()
+SurfaceComponent.add_oncoming(g_obj: [GameObject](#game-object)) -> None
+Inserts given game object in *oncoming* so that list is sorted according to their Surface component's depth variables.
+
+### SurfaceComponent.remove_oncoming()
+SurfaceComponent.remove_oncoming(g_obj: [GameObject](#game-object)) -> None
+Removes given game object from *oncoming* if it was there.
+
+### SurfaceComponent.destroy()
+SurfaceComponent.destroy() -> None
+calls remove_oncoming(self) for game object's Surface component to which the surface would have been blit on.
+
 
 ---
 
@@ -786,7 +867,7 @@ for i in range(256):
 e.run(120)
 ```
 
-and I (on my relatively good laptop) got approximately ```fps = 17.5``` which is (in my opinion) good result for python code. Try to launch code without chunk separation
+and I (on my relatively good laptop) got approximately ```fps = 17.5``` (0.0.7) which is (in my opinion) good result for python code. Try to launch code without chunk separation
 
 ### 2. Blit game objects from the start
 
@@ -831,7 +912,7 @@ e.forced_blit()
 e.run(120)
 ```
 
-Its results as ```fps = 22``` is very good, but it works only because there is no animation or other thing on those game objects. It is highly recommended to use first tip anyway. It is also possible to use first and second tips together.
+Its results as ```fps = 22``` (0.0.7) is very good, but it works only because there is no animation or other thing on those game objects. It is highly recommended to use first tip anyway. It is also possible to use first and second tips together.
 
 ### 3. Assign the least number of OnClickComponents 
 
