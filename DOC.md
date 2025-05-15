@@ -230,7 +230,7 @@ Sets need_blit equal to true, and if parent exists, calls *need_blit_set_true()*
 
 ### GameObject.destroy()
 GameObject.destroy() -> None
-destroys game object and all childs and components of the game object. Removes it from tag dictionary, objs list, and parents' childs list.  
+destroys game object and all childs and components of the game object. Removes it from tag dictionary, objs list, and parents' childs list. need blit sets true to update.
 
 ---
 
@@ -629,6 +629,36 @@ blits text on the surface.
 ### LabelComponent.set_sys_font()
 LabelComponent.set_sys_font(name: str, size: int, bold = 0, italic = 0) -> None
 Sets font to *pygame.font.SysFont(name, size, bold, italic)*
+
+---
+
+# Sprite Component
+Child class of [Component](#component).
+object for textures' render.
+> SpriteComponent(path: str, size: Vector2d)
+
+- [draw()](#spritecomponentdraw)
+
+**Requirements:**
+- [Surface Component](#surface-component)
+
+**Arguments:**
+- path (str) <br> relative or full path of needed texture. if not found, pygame error will rise up.
+- size (Vector2d) <br> **needed** size of the sprite. if the texture has different size than given it (sprite, not texture) will be reshaped.
+
+**Returns:**
+- newly created *SpriteComponent* object.
+
+**Variables:**
+- path (str) <br> relative or full path of needed texture.
+- size (Vector2d) <br> the size of the sprite.
+
+**Static Variables:**
+- downloaded (dict\[str, pygame.Surface]) <br> to prevent the load of the same texture multiple times, the downloaded textures are stored in static veriable.
+
+### SpriteComponent.draw()
+SpriteComponent.draw() -> None
+draws the sprite at the center of the *SurfaceComponent*'s surface
 
 ---
 

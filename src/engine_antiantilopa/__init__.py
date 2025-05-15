@@ -7,5 +7,6 @@ from .label import LabelComponent
 from .on_click import OnClickComponent
 from .shape import ShapeComponent, RectShapeComponent, CircleShapeComponent
 from .surface import SurfaceComponent
+from .sprite import SpriteComponent
 from .transform import Transform
 from .vmath_mini import Vector2d, Angle

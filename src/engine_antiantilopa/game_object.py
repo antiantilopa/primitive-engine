@@ -78,6 +78,8 @@ class GameObject:
         component.game_object = self
         
     def add_child(self, child: "GameObject"):
+        if child.parent is not None:
+            child.parent.childs.remove(child)
         self.childs.append(child)
         child.parent = self
 
@@ -139,6 +141,7 @@ class GameObject:
             self.parent.need_blit_set_true()
 
     def destroy(self):
+        self.need_blit_set_true()
         for component in self.components:
             component.destroy()
         for child in self.childs:
