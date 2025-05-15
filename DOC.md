@@ -58,6 +58,8 @@ e.run()
 - [On Click Component](#on-click-component)
 - [Key Bind Component](#key-bind-component)
 - [Label Component](#label-component)
+- [Sprite Component](#sprite-component)
+- [Entry Component](#entry-component)
 - [Camera](#camera)
 - [Vector Math](#vector-math)
 - - [Vector2d](#vector2d)
@@ -301,7 +303,7 @@ object for representing position and rotation in 2 dimensions.
 - rotation (Angle | float) <br> angle of the gameobject. ***Not working now!!!***
 
 **Returns:**
-- newly created Transform component.
+- newly created *Transform* object.
 
 **Variables:**
 - pos (Vector2d) <br> position of the **center** of the game object relative to its parent's **center**.
@@ -411,7 +413,7 @@ object for representation of color in RGB.
 - color (tuple\[int, int, int]) <br> RGB color of game object. each number must be in range (0, 256).
 
 **Returns:**
-- newly created *ColorComponent* object
+- newly created *ColorComponent* object.
 
 **Variables:**
 - color (tuple\[int, int, int]) <br> RGB color of game object. each number must be in range (0, 256).
@@ -472,7 +474,7 @@ represent circle shape.
 - need_draw (bool) <br> will the circle be drawn or not. Initially True
 
 **Returns:**
-- newly created *CircleShapeComponent* object
+- newly created *CircleShapeComponent* object.
 
 **Variables:**
 - radius (float) <br> radius of issued circle shape
@@ -526,7 +528,7 @@ if need_draw is True and game object contains [Color Component](#color-component
 # On Click Component
 Child class of [Component](#component).
 object for listening for mouse clicks and responding to them.
-> OnClickComponent(listen: tuple\[bool, bool, bool], listen_for_hold: bool, on_press: bool, cmd: Callable\[\[[GameObject](#game-object), tuple\[bool, bool, bool], Vector2d,  list\[Any]], None], *args: list\[Any]) -> OnClickComponent
+> OnClickComponent(listen: tuple\[bool, bool, bool], listen_for_hold: bool, on_press: bool, cmd: Callable\[\[[GameObject](#game-object), tuple\[bool, bool, bool], Vector2d,  list\[Any]], None], *args: list\[Any], active: bool = False) -> OnClickComponent
 
 - [iteration()](#onclickcomponentiteration)
 - [get_relative_coord()](#onclickcomponentget_relative_coord)
@@ -542,6 +544,7 @@ object for listening for mouse clicks and responding to them.
 - on_press (bool) <br> boolean representing should it be triggered by mouse button release (False) or mouse button push (True). Does not affect if listen_for_holds is True
 - cmd (Callable\[\[[GameObject](#game-object), tuple\[bool, bool, bool], Vector2d,  list\[Any]], None]) <br> callable function which will be called when mouse button pressed and all requirements satisfied. First argument - game object whose OnliclkComponent was triggered; Second argument - tuple\[bool, bool, bool] which mouse button (left, center or right) triggered OnliclkComponent; Third argument - Vector2d position of mouse relative to the center of the game object 
 - *args (list\[Any]) <br> arguments that will be given to cmd function. Initially empty
+- active (bool) <br> flag. if false, iteration will not run
 
 **Returns:**
 - newly created *OnClickComponent* object.
@@ -553,10 +556,11 @@ object for listening for mouse clicks and responding to them.
 - cmd (Callable\[\[[GameObject](#game-object), tuple\[bool, bool, bool]], None]) <br> callable function which will be called when mouse button pressed and all requirements satisfied. First argument - game object whose OnliclkComponent was triggered; Second argument - tuple\[bool, bool, bool] which mouse button (left, center or right) triggered OnliclkComponent.
 - previous (tuple\[bool, bool, bool]) <br> tuple of 3 booleans each representing mouse buttons state at previous iteration. *It is not updated if listen_for_holds is False*.
 - args (list\[Any]) <br> arguments that will be given to cmd function.
+- active (bool) <br> flag. if false, iteration will not run
 
 ### OnClickComponent.iteration()
 OnClickComponent.iteration() -> None
-check if triggered and mouse position lies in game object's shape, calls *cmd(game_object, mouse_buttons, \*args)* where *game_object* is game object that contains the on click component, *mouse_buttons* are buttons that **triggered** command (not all pressed buttons), and *\*args* are arguments provided through initialization of the component.
+Checks active to be true. Then, if triggered and mouse position lies in game object's shape, calls *cmd(game_object, mouse_buttons, \*args)* where *game_object* is game object that contains the on click component, *mouse_buttons* are buttons that **triggered** command (not all pressed buttons), and *\*args* are arguments provided through initialization of the component.
 
 ### OnClickComponent.get_relative_coord()
 OnClickComponent.get_relative_coord(pos: Vector2d) -> Vector2d
@@ -567,7 +571,7 @@ gets absolute position on actual screen/display and returns position relative to
 # Key Bind Component
 Child class of [Component](#component).
 object for listening for keyboard clicks and responding to them.
-> KeyBindComponent(listen: tuple\[int], listen_for_hold: bool, on_press: bool,  cmd: Callable\[\[[GameObject](#game-object), tuple\[int], list\[Any]], None], *args: list\[Any]) -> KeyBindComponent
+> KeyBindComponent(listen: tuple\[int], listen_for_hold: bool, on_press: bool,  cmd: Callable\[\[[GameObject](#game-object), tuple\[int], list\[Any]], None], *args: list\[Any], active: bool = True) -> KeyBindComponent
 
 - [iteration()](#keybindcomponentiteration)
 <br>
@@ -578,6 +582,7 @@ object for listening for keyboard clicks and responding to them.
 - on_press (bool) <br> boolean representing should it be triggered by keyboard keys releases (False) or their pushes (True). Does not affect if listen_for_holds is True
 - cmd (Callable\[\[[GameObject](#game-object), tuple\[int], list\[Any]], None]) <br> callable function which will be called when keyboard keys pressed and all requirements satisfied. First argument - game object whose KeyBindComponent was triggered; Second argument - tuple\[int] which keyboard keys (according to pygame keys indexation) triggered KeyBindComponent.
 - *args (list\[Any]) <br> arguments that will be given to cmd function. Initially empty
+- active (bool) <br> flag. if false, iteration will not run
 
 **Returns:**
 - newly created *KeyBindComponent* object.
@@ -589,10 +594,11 @@ object for listening for keyboard clicks and responding to them.
 - cmd (Callable\[\[[GameObject](#game-object), tuple\[int]], None]) <br> callable function which will be called when keyboard keys pressed and all requirements satisfied. First argument - game object whose KeyBindComponent was triggered; Second argument - tuple\[int] which keyboard keys (according to pygame keys indexation) triggered KeyBindComponent.
 - previous (list\[int]) <br> tuple of integers each representing keyboard keys states at previous iteration. *It is not updated if listen_for_holds is False*.
 - args (list\[Any]) <br> arguments that will be given to cmd function.
+- active (bool) <br> flag. if false, iteration will not run
 
 ### KeyBindComponent.iteration()
 KeyBindComponent.iteration() -> None
-check if triggered, and if it is, calls *cmd(game_object, keyboard_keys, \*args)* where *game_object* is game object that contains the key bind component, *keyboard_keys* are keys that **triggered** command (not all pressed keys), and *\*args* are arguments provided through initialization of the component.
+Checks active to be true. Then, check if triggered, and if it is, calls *cmd(game_object, keyboard_keys, \*args)* where *game_object* is game object that contains the key bind component, *keyboard_keys* are keys that **triggered** command (not all pressed keys), and *\*args* are arguments provided through initialization of the component.
 
 ---
 
@@ -616,7 +622,7 @@ object for text render.
 - font (pygame.font.Font) <br> font that will be used to draw text. Initially is "Consolas" font.
 
 **Returns:**
-- newly created *LabelComponent* object
+- newly created *LabelComponent* object.
 
 **Variables:**
 - text (str) <br> string that will be drawn. cannot have any esc commands. does not support \\n (next line).
@@ -638,6 +644,7 @@ object for textures' render.
 > SpriteComponent(path: str, size: Vector2d)
 
 - [draw()](#spritecomponentdraw)
+<br>
 
 **Requirements:**
 - [Surface Component](#surface-component)
@@ -678,6 +685,39 @@ function ***(not a method!)*** that binds 4 keyboard keys on camera's movement w
 
 > [!NOTE]  
 > When camera goes in one dirrection, on screen, game objects, that are not binded to camera, will look like moving opposite way.
+
+---
+
+# Entry Component
+Child class of [Label Component](#label-component).
+enables interaction with text input.
+> EntryComponent(default_text: str = "", font: pygame.font.Font = None, active: bool = False)
+
+- [iteration](#entrycomponentiteration)
+<br>
+
+**Requirements:**
+- [ColorComponent](#color-component)
+- [SurfaceComponent](#surface-component)
+
+**Arguments:**
+- default_text (str) <br> the text that will be shown from the start. Initially empty string ("")
+- font (pygame.font.Font) <br> the font that will be used to render the text. Initially consolas with height 20 px
+- active (bool) <br> flag. shows whether or not the keyboard input is captured. Initially false.
+
+**Returns:**
+- newly created *EntryComponent* object.
+
+**Variables:**
+- text (str) <br> the text that is shown.
+- font (pygame.font.Font) <br> the font that will be used to render the text.
+- active (bool) <br> flag. shows whether or not the keyboard input is captured.
+
+### EntryComponent.iteration()
+EntryComponent.iteration() -> None
+Uses pygame events to get text input, and stores it in *text* variable. Captures *KeyDown* events to catch backspaces. 
+> [!Note]
+> Backspace deletes only one character, no matter how long is held!
 
 ---
 
@@ -818,7 +858,7 @@ class that represent angles in radians.
 - angle (float) <br> angle in radians. Default 0
 
 **Returns:**
-- newly created *Angle* object
+- newly created *Angle* object.
 
 **Variables:**
 - angle (float) <br> angle in radians.

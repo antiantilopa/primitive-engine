@@ -12,16 +12,20 @@ class OnClickComponent(Component):
     on_press: bool
     previous: tuple[bool, bool, bool]
     args: list[Any]
+    active: bool
 
-    def __init__(self, listen: tuple[bool, bool, bool], listen_for_hold: bool, on_press: bool, cmd: Callable[[GameObject, tuple[bool, bool, bool], Vector2d, list[Any]], None], *args: list[Any]):
+    def __init__(self, listen: tuple[bool, bool, bool], listen_for_hold: bool, on_press: bool, cmd: Callable[[GameObject, tuple[bool, bool, bool], Vector2d, list[Any]], None], *args: list[Any], active: bool = True):
         self.cmd = cmd
         self.listen = listen
         self.listen_for_hold = listen_for_hold
         self.on_press = on_press
         self.args = args
+        self.active = active
         self.previous = (False, False, False)
 
     def iteration(self):
+        if not self.active:
+            return
         mouse = pg.mouse.get_pressed()
         tmp = list(pg.mouse.get_pressed())
         if not self.listen_for_hold:

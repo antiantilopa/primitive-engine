@@ -33,6 +33,7 @@ class Engine:
                     run = False
 
             self.iteration()
+            pg.event.clear()
 
             self.draw()
 

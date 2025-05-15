@@ -10,17 +10,21 @@ class KeyBindComponent(Component):
     on_press: bool
     previous: list[int]
     args: list[Any]
+    active: bool
 
 
-    def __init__(self, listen: tuple[int], listen_for_hold: bool, on_press: bool,  cmd: Callable[[GameObject, tuple[int], list[Any]], None], *args: list[Any]):
+    def __init__(self, listen: tuple[int], listen_for_hold: bool, on_press: bool,  cmd: Callable[[GameObject, tuple[int], list[Any]], None], *args: list[Any], active: bool = True):
         self.listen = tuple(listen)
         self.listen_for_hold = listen_for_hold
         self.on_press = on_press
         self.cmd = cmd
-        self.previous = []
+        self.active = active
         self.args = args
+        self.previous = []
     
     def iteration(self):
+        if not self.active:
+            return
         keys = pg.key.get_pressed()
         listen_keys = []
         for i in self.listen:

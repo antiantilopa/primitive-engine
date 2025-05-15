@@ -8,5 +8,6 @@ from .on_click import OnClickComponent
 from .shape import ShapeComponent, RectShapeComponent, CircleShapeComponent
 from .surface import SurfaceComponent
 from .sprite import SpriteComponent
+from .entry import EntryComponent
 from .transform import Transform
 from .vmath_mini import Vector2d, Angle
