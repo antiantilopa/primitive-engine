@@ -53,6 +53,7 @@ class GameObject:
         self.active = True
         self.need_draw = True
         self.need_blit = True
+        self.need_first_iteration = True
         GameObject.objs.append(self)
         if isinstance(tags, str):
             tag = tags
@@ -105,14 +106,18 @@ class GameObject:
     def first_iteration(self):
         if not self.active:
             return
+        self.need_first_iteration = False
         for component in self.components:
             component.first_iteration()
 
     def iteration(self):
         if not self.active:
             return
-        for component in self.components:
-            component.iteration()
+        if self.need_first_iteration:
+            self.first_iteration()
+        else:
+            for component in self.components:
+                component.iteration()
 
     def draw(self):
         if not self.active or not self.need_draw:
@@ -122,6 +127,8 @@ class GameObject:
 
     def enable(self):
         self.active = True
+        self.need_draw = True
+        self.need_blit = True
         for child in self.childs:
             child.enable()
 
@@ -141,11 +148,12 @@ class GameObject:
             self.parent.need_blit_set_true()
 
     def destroy(self):
+        self.disable()
         self.need_blit_set_true()
         for component in self.components:
             component.destroy()
-        for child in self.childs:
-            child.destroy()
+        while len(self.childs) != 0:
+            self.childs[0].destroy()
         GameObject.objs.remove(self)
         for tag in self.tags:
             GameObject.group_tag_dict[tag].remove(self)
@@ -164,3 +172,6 @@ class GameObject:
 
     def __repr__(self):
         return f"GameObject: tags:{self.tags}, components: {self.components}"
+
+
+GameObject.root = GameObject("main_screen")

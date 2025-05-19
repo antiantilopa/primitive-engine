@@ -5,19 +5,19 @@ from .transform import Transform
 from .vmath_mini import Vector2d
 import pygame as pg
 
+pg.init()
+pg.font.init()
+pg.mixer.init()
+
 class Engine:
 
     def __init__(self, window_size: Vector2d|tuple[int, int] = Vector2d(0, 0)):
         if not isinstance(window_size, Vector2d):
             window_size = Vector2d.from_tuple(window_size)
-        pg.init()
-        pg.font.init()
-        screen = GameObject("main_screen")
-        screen.add_component(Transform(Vector2d(0, 0)))
-        screen.add_component(SurfaceComponent(window_size))
-        screen.get_component(SurfaceComponent).pg_surf = pg.display.set_mode(screen.get_component(SurfaceComponent).pg_surf.get_size())
-        GameObject.root = screen
-        screen.add_child(Camera)
+        GameObject.root.add_component(Transform(Vector2d(0, 0)))
+        GameObject.root.add_component(SurfaceComponent(window_size))
+        GameObject.root.get_component(SurfaceComponent).pg_surf = pg.display.set_mode(GameObject.root.get_component(SurfaceComponent).pg_surf.get_size())
+        GameObject.root.add_child(Camera)
 
     def run(self, fps = 20):
         run = True
@@ -55,6 +55,8 @@ class Engine:
         window_size = GameObject.root.get_component(SurfaceComponent).size
         camera_pos = Camera.get_component(Transform).pos
         for g_obj in GameObject.objs:
+            if not g_obj.active:
+                continue
             if g_obj.need_draw:
                 g_obj.need_draw = True
                 g_obj.get_component(SurfaceComponent).pg_surf.fill((0, 0, 0, 0))
@@ -73,11 +75,14 @@ class Engine:
                             break
 
         for g_obj in GameObject.objs:
-            g_obj.draw()
-            g_obj.need_draw = False
+            if g_obj.active:
+                g_obj.draw()
+                g_obj.need_draw = False
 
         def blit(g_obj: GameObject) -> bool:
             def check(g_obj: GameObject):
+                if not g_obj.active:
+                    return False
                 if g_obj.need_blit:
                     return True
                 for oncomer in g_obj.get_component(SurfaceComponent).oncoming:
@@ -93,7 +98,7 @@ class Engine:
                         g_obj.need_blit = True
 
             if not (g_obj in GameObject.get_group_by_tag("Camera")):
-                if g_obj.need_blit:
+                if g_obj.need_blit and g_obj.active:
                     g_obj.get_component(SurfaceComponent).blit()
                     g_obj.need_blit = False
                     return True

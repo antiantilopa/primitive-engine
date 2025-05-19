@@ -165,6 +165,7 @@ The *GameObject* class is a kind of container for [components](#component). It c
 - active (bool) <br> state of the game object. If not active, it will not iterate or be drawn on screen.
 - need_draw (bool) <br> flag variable. if true, game object will be drawn.
 - need_blit (bool) <br> flag variable. if true and game object is on screen (absolute cordinates touches screen), game object will be blit.
+- need_first_iteration (bool) <br> flag variable. if true, game object will call *first_iteration* instead of *iteration*.
 
 **Static Variables:**
 - root ([GameObject](#game-object)) <br> root game object representing screen. all gameobject have to be chained to it to be drawn. 
