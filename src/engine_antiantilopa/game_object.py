@@ -74,6 +74,20 @@ class GameObject:
             raise KeyError(f"There is no GameObject with \"{tag}\" tag")
         return GameObject.group_tag_dict[tag]
 
+    @staticmethod
+    def get_game_object_by_tags(*tags: list[str]) -> "GameObject":
+        result = GameObject.get_group_by_tag(tags[0])
+        for tag in tags:
+            for g_obj in result:
+                if tag not in g_obj.tags:
+                    result.remove(g_obj)
+        if len(result) == 1:
+            return result[0]
+        elif len(result) == 0:
+            raise KeyError(f"There is no GameObject with tags {tags}")
+        else:
+            raise KeyError(f"There are several GameObjects with tags {tags}: {result}")
+
     def add_component(self, component: Component):
         self.components.append(component)
         component.game_object = self

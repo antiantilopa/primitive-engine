@@ -133,6 +133,7 @@ object for all game "objects"
 > GameObject(tags: list\[str]) -> GameObject
 
 - [get_group_by_tag()](#gameobjectget_group_by_tag)
+- [get_game_object_by_tags()](#gameobjectget_game_object_by_tags)
 - [add_component()](#gameobjectadd_component)
 - [add_child()](#gameobjectadd_child)
 - [get_component()](#gameobjectget_component)
@@ -176,8 +177,12 @@ The *GameObject* class is a kind of container for [components](#component). It c
 GameObject.get_group_by_tag(tag: str) -> list\[[GameObject](#game-object)]
 Static method. returns all game objects with given tag
 
+### GameObject.get_game_object_by_tags()
+GameObject.get_game_object_by_tags(*tags: list\[str]) -> [GameObject](#game-object)
+Static method. returns one game object that has the given tags only. if there are more than 1 or, there are no such, Exception raised.
+
 ### GameObject.show_geneology_tree()
-show_geneology_tree(game_object: "[GameObject](#game-object)|None" = None, depth: int = 1) -> None
+show_geneology_tree(game_object: [GameObject](#game-object)|None = None, depth: int = 1) -> None
 prints geneology tree starting from given game object. Default starting point is root game object.
 
 ### GameObject.add_component()
@@ -366,6 +371,10 @@ object for representing surface where everything is drawn.
 **Arguments:**
 - size (Vector2d) <br> size of surface and game object.
 - crop (bool) <br> flag variable. shows whether or not the surface should be cropped by parent surface. Initially True.
+- layer (int) <br> the layer of the surface. Initially 1
+
+> [!WARNING]
+> layer variable should not be negative. if layer is negative, some functions may not work!
 
 **Returns:**
 - newly created *SurfaceComponent* object.
@@ -376,6 +385,10 @@ object for representing surface where everything is drawn.
 - crop (bool) <br> flag: whether or not the surface should be cropped by parent surface. When True, it is much easier for computer to run the game
 - depth (int) <br> shows to which depth it needs to "fall". equal 1 if *crop*.
 - oncoming (list\[[GameObject](#game-object)]) <br> list of game objects that will be blit on the surface
+- layer (int) <br> the layer of the surface. higher the layer variable, higher the surface will be. 
+
+> [!NOTE]
+> the layer do not affect game objects that has different parent. If two objects with the same parent have the same layer variable, the overlay will be hardly determined! 
 
 ### SurfaceComponent.first_iteration()
 SurfaceComponent.first_iteration() -> None
@@ -391,7 +404,12 @@ Updates *depth* of the Surface component, so that it will blit without crops. Re
 
 ### SurfaceComponent.add_oncoming()
 SurfaceComponent.add_oncoming(g_obj: [GameObject](#game-object)) -> None
-Inserts given game object in *oncoming* so that list is sorted according to their Surface component's depth variables.
+Inserts given game object in *oncoming* so that list is sorted according to their Surface component's depth and layer variables.
+
+> [!NOTE]
+> the rich compare function for insort of game objects is: 
+> \[depth - \frac{1}{1 + layer}\] 
+> it can be seen that if layer is negative, then the fraction will be more than 1, thus it will overshadow depth difference. though, nothing stops layer from being a fraction > 0.
 
 ### SurfaceComponent.remove_oncoming()
 SurfaceComponent.remove_oncoming(g_obj: [GameObject](#game-object)) -> None
@@ -642,17 +660,19 @@ Sets font to *pygame.font.SysFont(name, size, bold, italic)*
 # Sprite Component
 Child class of [Component](#component).
 object for textures' render.
-> SpriteComponent(path: str, size: Vector2d)
+> SpriteComponent(path: str, size: Vector2d, nickname: str)
 
 - [draw()](#spritecomponentdraw)
+- [get_by_nickname()]()
 <br>
 
 **Requirements:**
 - [Surface Component](#surface-component)
 
 **Arguments:**
-- path (str) <br> relative or full path of needed texture. if not found, pygame error will rise up.
+- path (str) <br> relative or full path of needed texture. if not found, pygame error will rise up. 
 - size (Vector2d) <br> **needed** size of the sprite. if the texture has different size than given it (sprite, not texture) will be reshaped.
+- nickname (str) <br> the name to call downloaded texture. 
 
 **Returns:**
 - newly created *SpriteComponent* object.
@@ -668,6 +688,9 @@ object for textures' render.
 SpriteComponent.draw() -> None
 draws the sprite at the center of the *SurfaceComponent*'s surface
 
+### SpriteComponent.get_by_nickname()
+Spritecomponent.get_by_nickname(nickname: str) -> pygame.Surface:
+static method. returns Surface of sprite by the nickname.
 ---
 
 # Camera
@@ -695,6 +718,7 @@ enables interaction with text input.
 > EntryComponent(default_text: str = "", font: pygame.font.Font = None, active: bool = False)
 
 - [iteration](#entrycomponentiteration)
+- [clear](#entrycomponentclear)
 <br>
 
 **Requirements:**
@@ -719,6 +743,10 @@ EntryComponent.iteration() -> None
 Uses pygame events to get text input, and stores it in *text* variable. Captures *KeyDown* events to catch backspaces. 
 > [!Note]
 > Backspace deletes only one character, no matter how long is held!
+
+### EntryComponent.clear()
+EntryComponent.clear() -> None
+Sets text equal to empty string, *need_draw* to true, and calls [*need_blit_set_true()*](#gameobjectneed_blit_set_true) method
 
 ---
 

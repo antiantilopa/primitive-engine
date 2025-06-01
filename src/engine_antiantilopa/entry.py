@@ -28,3 +28,5 @@ class EntryComponent(LabelComponent):
 
     def clear(self):
         self.text = ""
+        self.game_object.need_draw = True
+        self.game_object.need_blit_set_true()

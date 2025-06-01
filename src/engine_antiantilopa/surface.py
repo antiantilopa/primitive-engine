@@ -12,14 +12,16 @@ class SurfaceComponent(Component):
     crop: bool
     depth: int
     oncoming: list[GameObject]
+    layer: int
 
 
-    def __init__(self, size: Vector2d, crop:bool=True):
+    def __init__(self, size: Vector2d, crop:bool=True, layer: int = 0):
         self.size = size
         self.pg_surf = pg.Surface(size.as_tuple(), pg.SRCALPHA, 32)
         self.crop = crop
         self.depth = 1
         self.oncoming = []
+        self.layer = layer
         if DEBUG:
             self.pg_surf.set_alpha(128)
 
@@ -69,6 +71,9 @@ class SurfaceComponent(Component):
         abs_coords = self.game_object.get_component(Transform).pos
         def is_box_in_box(center_abs_pos: Vector2d, size1: Vector2d, size2: Vector2d) -> bool:
             return (center_abs_pos - size1 / 2).is_in_box(size2 / -2, size2 / 2) and (center_abs_pos + size1 / 2).is_in_box(size2 / -2, size2 / 2)
+        prev_g_obj = self.game_object
+        for i in range(self.depth):
+            prev_g_obj = prev_g_obj.parent
         self.depth = 1
         while g_obj != GameObject.root:
             if is_box_in_box(abs_coords, self.size, g_obj.get_component(SurfaceComponent).size):
@@ -77,9 +82,6 @@ class SurfaceComponent(Component):
             abs_coords += g_obj.get_component(Transform).pos
             g_obj = g_obj.parent
             self.depth += 1
-        prev_g_obj = self.game_object
-        for i in range(self.depth):
-            prev_g_obj = prev_g_obj.parent
 
         prev_g_obj.get_component(SurfaceComponent).remove_oncoming(self.game_object)
         g_obj.get_component(SurfaceComponent).add_oncoming(self.game_object)
@@ -88,7 +90,7 @@ class SurfaceComponent(Component):
     
     def add_oncoming(self, g_obj: GameObject):
         if g_obj not in self.oncoming:
-            bisect.insort(self.oncoming, g_obj, key=lambda x: x.get_component(SurfaceComponent).depth)
+            bisect.insort(self.oncoming, g_obj, key=lambda x: x.get_component(SurfaceComponent).depth - (1 / (x.get_component(SurfaceComponent).layer + 1)))
 
     def remove_oncoming(self, g_obj: GameObject):
         if g_obj in self.oncoming:
