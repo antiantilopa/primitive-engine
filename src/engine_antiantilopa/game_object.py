@@ -71,7 +71,7 @@ class GameObject:
     @staticmethod
     def get_group_by_tag(tag: str) -> list["GameObject"]:
         if not tag in GameObject.group_tag_dict.keys():
-            raise KeyError(f"There is no GameObject with \"{tag}\" tag")
+            return []
         return GameObject.group_tag_dict[tag]
 
     @staticmethod

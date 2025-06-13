@@ -10,4 +10,4 @@ from .surface import SurfaceComponent
 from .sprite import SpriteComponent
 from .entry import EntryComponent
 from .transform import Transform
-from .vmath_mini import Vector2d, Angle
+from .vmath_mini import Vector2d, VectorRange, Angle

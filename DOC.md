@@ -175,7 +175,7 @@ The *GameObject* class is a kind of container for [components](#component). It c
 
 ### GameObject.get_group_by_tag()
 GameObject.get_group_by_tag(tag: str) -> list\[[GameObject](#game-object)]
-Static method. returns all game objects with given tag
+Static method. returns all game objects with given tag. if there are no, empty list returned.
 
 ### GameObject.get_game_object_by_tags()
 GameObject.get_game_object_by_tags(*tags: list\[str]) -> [GameObject](#game-object)
@@ -663,7 +663,8 @@ object for textures' render.
 > SpriteComponent(path: str, size: Vector2d, nickname: str)
 
 - [draw()](#spritecomponentdraw)
-- [get_by_nickname()]()
+- [get_by_nickname()](#spritecomponentget_by_nickname)
+- [is_downloaded()](#spritecomponentis_downloaded)
 <br>
 
 **Requirements:**
@@ -686,11 +687,19 @@ object for textures' render.
 
 ### SpriteComponent.draw()
 SpriteComponent.draw() -> None
-draws the sprite at the center of the *SurfaceComponent*'s surface
+Draws the sprite at the center of the *SurfaceComponent*'s surface
 
 ### SpriteComponent.get_by_nickname()
 Spritecomponent.get_by_nickname(nickname: str) -> pygame.Surface:
-static method. returns Surface of sprite by the nickname.
+Static method. returns Surface of sprite by the nickname.
+
+### SpriteComponent.is_downloaded()
+SpriteComponent.is_downloaded(nickname: str = None, path: str = None) -> bool
+Static method. returns whether tecture given by either nickname or path is downloaded.
+
+> [!NOTE]
+> Either nickname or path should be given. not both, not none. 
+
 ---
 
 # Camera
@@ -772,6 +781,7 @@ Class to represent a pair of floats.
 - [fast_reach_test()](#Vector2dfast_reach_test)
 - [get_quarter()](#Vector2dget_quarter)
 - [is_in_box()](#Vector2dis_in_box)
+- [is_gaussean()](#Vector2dis_gaussean)
 - [complex_multiply()](#Vector2dcomplex_multiply)
 - [dot_multiply()](#Vector2ddot_multiply)
 
@@ -789,14 +799,17 @@ Class to represent a pair of floats.
 - y (float) <br> float representing y coordinate
 
 **Operations:**
-- addition:<br> Vector2d(a, b) + Vector2d(c, d) -> Vector2d(a + c, b + d)
+- **addition**:<br> Vector2d(a, b) + Vector2d(c, d) -> Vector2d(a + c, b + d)
 - substraction:<br> Vector2d(a, b) - Vector2d(c, d) -> Vector2d(a - c, b - d)
 - multiplication:<br> Vector2d(a, b) * Vector2d(c, d) -> Vector2d(a * c, b * d) <br> Vector2d(a, b) * c -> Vector2d(a * c, b * c)
 - true division:<br> Vector2d(a, b) / c -> Vector2d(a / c, b / c)
 - floor division:<br> Vector2d(a, b) // c -> Vector2d(a // c, b // c)
 - module division:<br> Vector2d(a, b) % c -> Vector2d(a % c, b % c)
-- is equal:<br> Vector(a, b) == Vector(c, d) -> (a == c) and (b == d)
-- is not equal:<br> Vector(a, b) != Vector(c, d) -> (a != c) or (b != d)
+- is equal:<br> Vector2d(a, b) == Vector2d(c, d) -> (a == c) and (b == d)
+- is not equal:<br> Vector2d(a, b) != Vector2d(c, d) -> (a != c) or (b != d)
+- get item:<br> Vector2d(a, b)\[i] -> (a, b)\[i]
+> [!NOTE]
+> when getting items, index i must be 0 or 1
 
 ### Vector2d.from_tuple()
 Vector2d.from_tuple(tpl: tuple\[float, float]) -> Vector2d
@@ -853,6 +866,10 @@ returns plane quarter of vector.
 Vector2d.is_in_box(other1: Vector2d, other2: Vector2d) -> bool
 returns True if **self** is in rect such that **other1** and **other2** are corners.
 
+### Vector2d.is_gaussean()
+Vector2d.is_gaussean() -> bool
+returns True if both *x* and *y* variables are integers.
+
 ### Vector2d.complex_multiply()
 Vector2d.complex_multiply(other: Vector2d) -> Vector2d
 multiplies vectors as if Vector2d(a, b) = a + bi.
@@ -867,6 +884,46 @@ resulting value is product of **self** and **other** lengths with cosine of angl
 ### Vector2d.operation()
 Vector2d.operation(other: Vector2d, operation: Callable\[\[float, float], float]) -> Vector2d
 returns vector such that its coords are operation(self.coord, other.coord)
+
+---
+
+# VectorRange
+class to represent a range of gaussean (integer) vectors.
+
+> VectorRenge(end: Vector2d) -> VectorRange
+> VectorRenge(start: Vector2d, end: Vector2d) -> VectorRange
+> VectorRenge(start: Vector2d, end: Vector2d, step: Vector2d) -> VectorRange
+
+<br>
+
+**Arguments:**
+- start (Vector2d) <br> start vector of the range. Initially Vector2d(0, 0).
+- end (Vector2d) <br> end vector of the range.
+- step (Vector2d) <br> step vector of the range. Initially Vector2d(1, 1).
+> [!NOTE]
+> All arguments must be gausseans, and it must be possible to get from start to end using *step* * *k* where k is gaussean, k.x > 0, and k.y > 0
+
+**Returns:**
+- newly created *VectorRange* object.
+
+**Variables:**
+- start (Vector2d) <br> start vector of the range.
+- end (Vector2d) <br> end vector of the range.
+- step (Vector2d) <br> step vector of the range.
+- steps (Vector2d) <br> vector of steps to reach the end
+> [!NOTE]
+> *steps* variable is such a k vector discussed in note above.
+
+**Operations:**
+- get item:<br> returns Vector2d according to range. It will go first on x axis, and then on y axis.
+> [!NOTE]
+> For example, in VectorRange(Vector2d(3, 2)) it will go as:
+> | **0** | **1** | **2** |
+> | ----- | ----- | ----- |
+> | **3** | **4** | **5** |
+> 
+> the order will be: <0, 0>, <1, 0>, <2, 0>, <0, 1>, <1, 1>, <2, 1>
+
 
 ---
 

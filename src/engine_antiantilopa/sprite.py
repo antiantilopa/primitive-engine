@@ -26,9 +26,22 @@ class SpriteComponent(Component):
         surf = self.game_object.get_component(SurfaceComponent)
         surf.pg_surf.blit(self.texture, ((surf.size - Vector2d.from_tuple(self.texture.get_size())) / 2).as_tuple())
 
+    @staticmethod
     def get_by_nickname(nickname: str) -> pg.Surface:
         prenickname = ":"
         if (prenickname + nickname) in SpriteComponent.downloaded:
             return SpriteComponent.downloaded[(prenickname + nickname)]
         else:
             raise KeyError(f"Sprite with nickname '{nickname}' not found.")
+    
+    @staticmethod
+    def is_downloaded(nickname: str = None, path: str = None) -> bool:
+        if nickname is None and path is None:
+            raise ValueError("Either 'nickname' or 'path' must be provided.")
+        if path is not None and nickname is not None:
+            raise ValueError("Only one of 'nickname' or 'path' should be provided.")
+        if path is not None:
+            return path in SpriteComponent.downloaded
+        if nickname is not None:
+            prenickname = ":"
+            return (prenickname + nickname) in SpriteComponent.downloaded

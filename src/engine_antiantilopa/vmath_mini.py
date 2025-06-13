@@ -74,6 +74,12 @@ class Vector2d:
         y1, y2 = (min(y1, y2), max(y1, y2))
         return (x1 <= self.x and self.x <= x2 and y1 <= self.y and self.y <= y2)
 
+    def is_gaussean(self) -> bool:
+        """
+        Checks if the vector is a Gaussian vector (i.e., both coordinates are integers).
+        """
+        return self.x.is_integer() and self.y.is_integer()
+
     def __add__(self, other: "Vector2d") -> "Vector2d":
         return Vector2d(self.x + other.x, self.y + other.y)
 
@@ -81,7 +87,13 @@ class Vector2d:
         return Vector2d(self.x - other.x, self.y - other.y)
 
     def __mul__(self, other: "float|Vector2d") -> "Vector2d":
-        if type(other) == Vector2d:
+        if isinstance(other, Vector2d):
+            return Vector2d(self.x * other.x, self.y * other.y)
+        else:
+            return Vector2d(self.x * other, self.y * other)
+    
+    def __rmul__(self, other: "float|Vector2d") -> "Vector2d":
+        if isinstance(other, Vector2d):
             return Vector2d(self.x * other.x, self.y * other.y)
         else:
             return Vector2d(self.x * other, self.y * other)
@@ -116,6 +128,57 @@ class Vector2d:
 
     def __tuple__(self) -> tuple[int, int]:
         return (self.x, self.y)
+
+    def __getitem__(self, ind: int) -> float:
+        if ind == 0:
+            return self.x
+        elif ind == 1:
+            return self.y
+        else:
+            raise IndexError("Index out of range for Vector2d, only 0 and 1 are allowed")
+    
+    def __round__(self, ndigits: int = None) -> "Vector2d":
+        return Vector2d(round(self.x, ndigits), round(self.y, ndigits))
+
+    def __neg__(self) -> "Vector2d":
+        return Vector2d(-self.x, -self.y)
+
+class VectorRange:
+    """
+    Class to represent a range of vectors.
+    """
+
+    start: Vector2d
+    end: Vector2d
+    step: Vector2d
+    steps: Vector2d
+
+    def __init__(self, start: Vector2d, end: Vector2d, step: Vector2d = Vector2d(1, 1)) -> None:
+        if not start.is_gaussean():
+            raise ValueError("Start vector must be a Gaussian vector (both coordinates must be integers)")
+        if not end.is_gaussean():
+            raise ValueError("End vector must be a Gaussian vector (both coordinates must be integers)")
+        if not step.is_gaussean():
+            raise ValueError("Step vector must be a Gaussian vector (both coordinates must be integers)")
+        steps = (end - start).operation(step, lambda x, y: x / y)
+        if step.x < 0 or step.y < 0:
+            raise ValueError("from start to end step number must be positive")
+        if not steps.is_gaussean():
+            raise ValueError("From start to end it have to be an integer number of steps")
+        
+        self.steps = steps
+        self.start = start
+        self.end = end
+        self.step = step
+
+    def __getitem__(self, index: int) -> Vector2d:
+        if index < 0:
+            raise IndexError("Index out of range for VectorRange")
+        if (index >= self.steps.x * self.steps.y):
+            raise IndexError("Index out of range for VectorRange")
+        xsteps = index % self.steps.x
+        ysteps = index // self.steps.x
+        return self.start + Vector2d(xsteps * self.step.x, ysteps * self.step.y)
 
 class Angle:
     """
