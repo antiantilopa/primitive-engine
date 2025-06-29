@@ -102,17 +102,29 @@ class Vector2d:
         # complex multiplying
         return Vector2d(self.x * other.x - self.y * other.y, self.y * other.x + self.x * other.y)
 
-    def dot_multiply(self, other: "Vector2d") -> float:
-        return self.x * other.x + self.y * other.y
+    def dot_multiply(self, other: "float|Vector2d") -> float:
+        if isinstance(other, Vector2d):
+            return self.x * other.x + self.y * other.y
+        else:
+            return (self.x + self.y) * other
 
-    def __truediv__(self, other: float) -> "Vector2d":
-        return Vector2d(self.x / other, self.y / other)
+    def __truediv__(self, other: "float|Vector2d") -> "Vector2d":
+        if isinstance(other, Vector2d):
+            return Vector2d(self.x / other.x, self.y / other.y)
+        else:
+            return Vector2d(self.x / other, self.y / other)
 
-    def __floordiv__(self, other: float) -> "Vector2d":
-        return Vector2d(self.x // other, self.y // other)
+    def __floordiv__(self, other: "float|Vector2d") -> "Vector2d":
+        if isinstance(other, Vector2d):
+            return Vector2d(self.x // other.x, self.y // other.y)
+        else:
+            return Vector2d(self.x // other, self.y // other)
     
-    def __mod__(self, other: float) -> "Vector2d":
-        return Vector2d(self.x % other, self.y % other)
+    def __mod__(self, other: "float|Vector2d") -> "Vector2d":
+        if isinstance(other, Vector2d):
+            return Vector2d(self.x % other.x, self.y % other.y)
+        else:
+            return Vector2d(self.x % other, self.y % other)
 
     def operation(self, other: "Vector2d", operation: Callable[[float, float], float]) -> "Vector2d":
         return Vector2d(operation(self.x, other.x), operation(self.y, other.y))

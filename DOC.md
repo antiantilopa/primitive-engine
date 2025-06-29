@@ -800,14 +800,14 @@ Class to represent a pair of floats.
 
 **Operations:**
 - **addition**:<br> Vector2d(a, b) + Vector2d(c, d) -> Vector2d(a + c, b + d)
-- substraction:<br> Vector2d(a, b) - Vector2d(c, d) -> Vector2d(a - c, b - d)
-- multiplication:<br> Vector2d(a, b) * Vector2d(c, d) -> Vector2d(a * c, b * d) <br> Vector2d(a, b) * c -> Vector2d(a * c, b * c)
-- true division:<br> Vector2d(a, b) / c -> Vector2d(a / c, b / c)
-- floor division:<br> Vector2d(a, b) // c -> Vector2d(a // c, b // c)
-- module division:<br> Vector2d(a, b) % c -> Vector2d(a % c, b % c)
-- is equal:<br> Vector2d(a, b) == Vector2d(c, d) -> (a == c) and (b == d)
-- is not equal:<br> Vector2d(a, b) != Vector2d(c, d) -> (a != c) or (b != d)
-- get item:<br> Vector2d(a, b)\[i] -> (a, b)\[i]
+- **substraction**:<br> Vector2d(a, b) - Vector2d(c, d) -> Vector2d(a - c, b - d)
+- **multiplication**:<br> Vector2d(a, b) * Vector2d(c, d) -> Vector2d(a * c, b * d) <br> Vector2d(a, b) * c -> Vector2d(a * c, b * c)
+- **true division**:<br> Vector2d(a, b) / Vector2d(c, d) -> Vector2d(a / c, b / d) <br> Vector2d(a, b) / c -> Vector2d(a / c, b / c) 
+- **floor division**:<br> Vector2d(a, b) // Vector2d(c, d) -> Vector2d(a // c, b // d) <br> Vector2d(a, b) // c -> Vector2d(a // c, b // c)
+- **module division**:<br> Vector2d(a, b) % Vector2d(c, d) -> Vector2d(a % c, b % d) <br> Vector2d(a, b) % c -> Vector2d(a % c, b % c)
+- **is equal**:<br> Vector2d(a, b) == Vector2d(c, d) -> (a == c) and (b == d)
+- **is not equal**:<br> Vector2d(a, b) != Vector2d(c, d) -> (a != c) or (b != d)
+- **get item**:<br> Vector2d(a, b)\[i] -> (a, b)\[i]
 > [!NOTE]
 > when getting items, index i must be 0 or 1
 
