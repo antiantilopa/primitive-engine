@@ -660,7 +660,7 @@ Sets font to *pygame.font.SysFont(name, size, bold, italic)*
 # Sprite Component
 Child class of [Component](#component).
 object for textures' render.
-> SpriteComponent(path: str, size: Vector2d, nickname: str)
+> SpriteComponent(path: str, size: Vector2d, nickname: str, frame: int = 0, frames_number: int = 1, start_frame_pos: Vector2d = Vector2d(0, 0), frame_direction: Vector2d = Vector2d(1, 0), frame_size: Vector2d = Vector2d(-1, -1))
 
 - [draw()](#spritecomponentdraw)
 - [get_by_nickname()](#spritecomponentget_by_nickname)
@@ -674,6 +674,11 @@ object for textures' render.
 - path (str) <br> relative or full path of needed texture. if not found, pygame error will rise up. 
 - size (Vector2d) <br> **needed** size of the sprite. if the texture has different size than given it (sprite, not texture) will be reshaped.
 - nickname (str) <br> the name to call downloaded texture. 
+- frame (int) <br> the index of needed frame. Initially 0.
+- frames_number (int) <br> the number of frames. Initially 1.
+- start_frame_pos (Vector2d) <br> the position of left top part of needed sprite sheet. Initially \<0, 0>.
+- frame_direction (Vector2d) <br> the direction in which the frames go. Initially \<1, 0>.
+- frame_size (Vector2d) <br> the size of the frame. Initially \<-1, -1>.
 
 **Returns:**
 - newly created *SpriteComponent* object.
@@ -681,6 +686,13 @@ object for textures' render.
 **Variables:**
 - path (str) <br> relative or full path of needed texture.
 - size (Vector2d) <br> the size of the sprite.
+- frame (int) <br> the index of needed frame. It cannot be more than *frames_number*.
+- frames_number (int) <br> the number of frames. 
+- start_frame_pos (Vector2d) <br> the position of left top part of needed sprite sheet. It is used if the image has multiple textures in it. 
+- frame_direction (Vector2d) <br> the direction in which the frames go. It can be only \<1, 0> or \<0, 1>. first means that the frames go in horizontal (from left to right) direction, whereas second means that the frames go in vertical (from top to bottom) direction.
+- frame_size (Vector2d) <br> the size of the frame.
+> [!NOTE]  
+> the *start_frame_pos* and *frame_size* **have to** be provided in pixels on the original image, not after rescale using *size*!
 
 **Static Variables:**
 - downloaded (dict\[str, pygame.Surface]) <br> to prevent the load of the same texture multiple times, the downloaded textures are stored in static veriable.

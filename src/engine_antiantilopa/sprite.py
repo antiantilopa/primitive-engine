@@ -7,20 +7,37 @@ class SpriteComponent(Component):
     downloaded: dict[str, pg.Surface] = {}
     texture: pg.Surface
     size: Vector2d
+    frame: int
+    frames_number: int
+    start_frame_pos: Vector2d
+    frame_direction: Vector2d
+    frame_size: Vector2d
 
-    def __init__(self, path: str = "", size: Vector2d = Vector2d(0, 0), nickname: str = ""):
+    def __init__(self, path: str = "", size: Vector2d = Vector2d(0, 0), nickname: str = "", start_frame_pos: Vector2d = Vector2d(0, 0), frame: int = 0, frames_number: int = 1, frame_direction: Vector2d = Vector2d(1, 0), frame_size: Vector2d = Vector2d(-1, -1)):
         prenickname = ":"
         if path != "" and path in SpriteComponent.downloaded:
-            self.texture = pg.transform.scale(SpriteComponent.downloaded[path], size.as_tuple())
+            self.texture = SpriteComponent.downloaded[path]
         elif nickname != "" and (prenickname + nickname) in SpriteComponent.downloaded:
-            self.texture = pg.transform.scale(SpriteComponent.downloaded[(prenickname + nickname)], size.as_tuple())
+            self.texture = SpriteComponent.downloaded[(prenickname + nickname)]
         else:
             if nickname != "":
                 SpriteComponent.downloaded[(prenickname + nickname)] = pg.image.load(path)
-                self.texture = pg.transform.scale(SpriteComponent.downloaded[(prenickname + nickname)], size.as_tuple())
+                self.texture = SpriteComponent.downloaded[(prenickname + nickname)]
             else:
                 SpriteComponent.downloaded[path] = pg.image.load(path)
-                self.texture = pg.transform.scale(SpriteComponent.downloaded[path], size.as_tuple())
+                self.texture = SpriteComponent.downloaded[path]
+        self.frame = frame
+        self.start_frame_pos = start_frame_pos
+        self.frames_number = frames_number
+        self.frame_direction = frame_direction
+        self.frame_size = frame_size
+        if frame_size == Vector2d(-1, -1) and frames_number == 1:
+            self.texture = pg.transform.scale(self.texture, size.as_tuple())
+            return
+        elif frame_size == Vector2d(-1, -1):
+            frame_size = (Vector2d.from_tuple(self.texture.get_size()) - start_frame_pos) // (frame_direction * (frames_number - 1) + Vector2d(1, 1))
+        self.texture = self.texture.subsurface((start_frame_pos + frame * frame_size * frame_direction).as_tuple() + (frame_size).as_tuple())
+        self.texture = pg.transform.scale(self.texture, size.as_tuple())
 
     def draw(self):
         surf = self.game_object.get_component(SurfaceComponent)
