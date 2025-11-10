@@ -59,6 +59,8 @@ e.run()
 - [Key Bind Component](#key-bind-component)
 - [Label Component](#label-component)
 - [Sprite Component](#sprite-component)
+- [Animation Component](#animation-component)
+- [Animation Object](#animation-object)
 - [Entry Component](#entry-component)
 - [Camera](#camera)
 - [Vector Math](#vector-math)
@@ -629,6 +631,7 @@ object for text render.
 
 - [draw()](#labelcomponentdraw)
 - [set_sys_font()](#labelcomponentset_sys_font)
+- [set_text()](#labelcomponentset_text)
 <br>
 
 **Requirements:**
@@ -654,6 +657,10 @@ blits text on the surface.
 ### LabelComponent.set_sys_font()
 LabelComponent.set_sys_font(name: str, size: int, bold = 0, italic = 0) -> None
 Sets font to *pygame.font.SysFont(name, size, bold, italic)*
+
+### LabelComponent.set_text()
+LabelComponent.set_text(text: str, change_surf: bool = False) -> None
+Sets label text to text. When *change_surf* is true, if text size is too big, changes the size of the surface to match the text size.
 
 ---
 
@@ -707,29 +714,97 @@ Static method. returns Surface of sprite by the nickname.
 
 ### SpriteComponent.is_downloaded()
 SpriteComponent.is_downloaded(nickname: str = None, path: str = None) -> bool
-Static method. returns whether tecture given by either nickname or path is downloaded.
+Static method. returns whether texture given by either nickname or path is downloaded.
 
 > [!NOTE]
 > Either nickname or path should be given. not both, not none. 
 
 ---
 
-# Camera
-a [GameObject](#game-object) object representing camera.
+# Animation Component
+Child class of [Component](#component). 
+object for animations' render.
+> AnimationComponent(nickname: str, size: Vector2d, tpf: int)
 
-**Tags:**
-- "Camera"
+- [iteration](#animationcomponentiteration)
+- [draw](#animationcomponentdraw)
+- [set_on_stop](#animationcomponentset_on_stop)
+- [new_animation](#animationcomponentnew_animation)
+- [is_downloaded]
+<br>
 
-**Components:**
-- [Transform](#transform) <br> at <0, 0> with rotation = 0
-- [SurfaceComponent](#surface-component) <br> with size <500, 500>
+**Requirements:**
+- [SurfaceComponent](#surface-component)
 
-#### bind_keys_for_camera_movement()
-bind_keys_for_camera_movement(keys: tuple[int, int, int, int] = (pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d), speed: float = 10) -> None
-function ***(not a method!)*** that binds 4 keyboard keys on camera's movement with given speed for up, left, down, right respectively. 
+**Arguments:**
+- nickname (str) <br> a nickname for a **previously** loaded animation.
+- size (Vector2d) <br> a size of one frame in pixels on the screen, not of actual image.
+- tpf (int) <br> ticks per frame. measures how many ticks should pass between two frames.
 
-> [!NOTE]  
-> When camera goes in one dirrection, on screen, game objects, that are not binded to camera, will look like moving opposite way.
+**Returns:**
+- newly created *AnimationComponent* object.
+
+**Variables:**
+- anim_obj ([Animationobject](#animation-object)) <br> an animation object. stores data about animation.
+- frames (list\[pygame.Surface]) <br> all frame images in needed order.
+- tpf (int) <br> ticks per frame. measures how many ticks should pass between two frames.
+- _tick (int) <br> how many ticks has passed since last frame was drawn. from 0 to *tpf - 1*. Initially 0.
+- _frame (int) <br> which frame was last drawn. from 0 to *len(frames) - 1*. Initially 0.
+- _stop (bool) <br> has the animation stopped. Initially False.
+- _back (bool) <br> is animation going back. Initially False.
+- _on_stop (Callable) <br> function that will be called when animation is finished. Initially *lambda:0*.
+- _args (list) <br> arguments provided to *_on_stop* function. Initially \[].
+
+**Static Variables:**
+- downloaded (dict\[str, [Animationobject](#animation-object)]) <br> stores all loaded animation objects.
+
+### AnimationComponent.iteration()
+AnimationComponent.iteration() -> None
+If *_stop*, does nothing.
+Increases *_tick* parameter, and calls *need_blit_set_true* and sets *need_draw = True* if *_tick* equals *tpf*. If animation is finished and not looped, then calls *_on_stop* and sets *_stop = True*.
+
+### AnimationComponent.draw()
+AnimationComponent.draw() -> None
+If *_stop*, does nothing.
+Draws *frames\[_frame]* on game object surface.
+
+### AnimationComponent.set_on_stop()
+AnimationComponent.set_on_stop(func: Callable, args: list) -> None
+Sets *_on_stop = func* and *_args = args*.
+
+### AnimationComponent.new_animation()
+AnimationComponent.new_animation(nickname: str, anim_obj: [AnimationObject](#animation-object)) -> None
+Static method. creates new animation and adds it to *downloaded*
+
+### AnimationComponent.is_downloaded()
+AnimationComponent.is_downloaded(nickname: str = None) -> bool
+Static method. returns whether animation given by nickname is downloaded.
+
+# Animation Object
+class to represent an animation
+> AnimationObject(sprite_nickname: str, loop: bool = 0, back_and_forth: bool = 0, frame_size: Vector2d)
+
+-[set_frame_order](#animationobjectset_frame_order)
+<br>
+
+**Arguments:**
+- sprite_nickname (str) <br> the nickname of **already** downloaded sprite. the sprite should contain all frames of animation.
+- loop (bool) <br> if true, the animation will never *stop*.
+- back_and_forth (bool) <br> if true and looped, then animation will be played from end to start and then loop.
+
+**Returns:**
+newly created *AnimationObject* object.
+
+**Variables:**
+- texture (pygame.Surface) <br> the texture that will be then disected into frames.
+- frame_size (Vector2d) <br> the size of one frame **on the texture**.
+- frame_order (list\[Vector2d]) <br> the order of the frames. it has the position of left-up corner of every frame **on the texture**.
+- loop (bool) <br> if true, the animation will never *stop*.
+- back_and_forth (bool) <br> if true and looped, then animation will be played from end to start and then loop.
+
+### AnimationObject.set_frame_order()
+AnimationObject.set_frame_order(frame_order: list\[Vector2d]) -> None
+Sets frame_order equal to given.
 
 ---
 
@@ -768,6 +843,25 @@ Uses pygame events to get text input, and stores it in *text* variable. Captures
 ### EntryComponent.clear()
 EntryComponent.clear() -> None
 Sets text equal to empty string, *need_draw* to true, and calls [*need_blit_set_true()*](#gameobjectneed_blit_set_true) method
+
+---
+
+# Camera
+a [GameObject](#game-object) object representing camera.
+
+**Tags:**
+- "Camera"
+
+**Components:**
+- [Transform](#transform) <br> at <0, 0> with rotation = 0
+- [SurfaceComponent](#surface-component) <br> with size <500, 500>
+
+#### bind_keys_for_camera_movement()
+bind_keys_for_camera_movement(keys: tuple[int, int, int, int] = (pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d), speed: float = 10) -> None
+function ***(not a method!)*** that binds 4 keyboard keys on camera's movement with given speed for up, left, down, right respectively. 
+
+> [!NOTE]  
+> When camera goes in one dirrection, on screen, game objects, that are not binded to camera, will look like moving opposite way.
 
 ---
 

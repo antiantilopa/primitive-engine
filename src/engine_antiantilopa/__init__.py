@@ -1,3 +1,4 @@
+from .animation import AnimationComponent, AnimationObject
 from .camera import Camera, bind_keys_for_camera_movement
 from .color import ColorComponent
 from .engine import Engine

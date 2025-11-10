@@ -25,3 +25,15 @@ class LabelComponent(Component):
 
         surf.pg_surf.blit(text, ((surf.size - Vector2d.from_tuple(text.get_size())) / 2).as_tuple())
 
+    def set_text(self, new_text: str, change_surf: bool = False):
+        self.text = new_text
+        if change_surf:
+            surf = self.game_object.get_component(SurfaceComponent)
+            text = self.font.render(self.text, 1, self.game_object.get_component(ColorComponent).color)
+            text_size = Vector2d.from_tuple(text.get_size())
+            surf_size = surf.size
+            if (text_size.x > surf_size.x) or (text_size.y > surf_size.y):
+                surf.pg_surf = pg.Surface(text_size.as_tuple(), pg.SRCALPHA, 32)
+                surf.size = text_size
+        self.game_object.need_blit_set_true()
+        self.game_object.need_draw = 1

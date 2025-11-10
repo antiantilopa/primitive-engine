@@ -133,10 +133,10 @@ class Vector2d:
         return f"<{self.x}, {self.y}>"
 
     def __eq__(self, other: "Vector2d") -> bool:
-        return (self.x == other.x and self.y == other.y)
+        return isinstance(other, Vector2d) and (self.x == other.x and self.y == other.y)
 
     def __ne__(self, other: "Vector2d") -> bool:
-        return (self.x != other.x or self.y != other.y)
+        return (not isinstance(other, Vector2d)) or (self.x != other.x or self.y != other.y)
 
     def __tuple__(self) -> tuple[int, int]:
         return (self.x, self.y)
