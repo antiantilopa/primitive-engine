@@ -164,6 +164,7 @@ class GameObject:
     def destroy(self):
         self.disable()
         self.need_blit_set_true()
+        self.need_draw_set_true()
         for component in self.components:
             component.destroy()
         while len(self.childs) != 0:

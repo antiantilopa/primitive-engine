@@ -11,9 +11,10 @@ class LabelComponent(Component):
     text: str
     font: pg.font.Font
 
-    def __init__(self, text: str, font: pg.font.Font = None):
+    def __init__(self, text: str, font: pg.font.Font = None, font_size: int = 32):
         self.text = text
-        if font is None: font = pg.font.SysFont("consolas", 30)
+        if font is None: 
+            font = pg.font.SysFont("consolas", font_size)
         self.font = font
 
     def set_sys_font(self, name: str, size: int, bold = 0, italic = 0):

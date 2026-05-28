@@ -81,6 +81,7 @@ main object of programm
 - [update()](#engineupdate)
 - [set_debug()](#engineset_debug)
 - [forced_blit()](#engineforced_blit)
+- [set_func_per_tick()](#engineset_func_per_tick)
 <br>
 The *Engine* class gathers and launches all code at once. Default init creates window size equal to size of display.
 
@@ -92,6 +93,9 @@ The *Engine* class gathers and launches all code at once. Default init creates w
 
 **Variables:**
 - no parameters
+
+**Static Variables:**
+- funcs_per_tick (list\[Callable]) <br> list of functions that will be called every game tick.
 
 ### Engine.first_iteration()
 Engine.first_iteration() -> None
@@ -112,10 +116,11 @@ Calls [refresh()](#compomemtrefresh) method from all component classes.
 ### Engine.run()
 Engine.run(fps: float) -> None
 runs pygame application with given frame rate in a loop until window quit or error occur. Before main loop, *first_iteration()* method is called. In the loop, the methods are called in the given order:
-1. iteration()
-2. draw()
-3. refresh()
-4. pygame.display.flip()
+1. func() from *funcs_per_tick* static variable.
+2. iteration()
+3. draw()
+4. refresh()
+5. pygame.display.flip()
 
 ### Engine.set_debug()
 Engine.set_debug(value: bool) -> None
@@ -124,6 +129,10 @@ Static method. Sets global DEBUG variable equal to value.
 ### Engine.forced_blit()
 Engine.draw() -> None
 calls iteration(), calls [draw()](#gameobjectdraw) from all game objects, then blits all surfaces, according to oncoming preference (as in draw()).
+
+### Engine.set_func_per_tick()
+Engine.set_func_per_tick(func: Callable) -> None
+appends func to *funcs_per_tick* static variable.
 
 ---
 
@@ -240,7 +249,7 @@ Sets need_blit equal to true, and if parent exists, calls *need_blit_set_true()*
 
 ### GameObject.destroy()
 GameObject.destroy() -> None
-destroys game object and all childs and components of the game object. Removes it from tag dictionary, objs list, and parents' childs list. need blit sets true to update.
+destroys game object and all childs and components of the game object. Removes it from tag dictionary, objs list, and parents' childs list. Calls *need_blit_set_true()* and *need_draw_set_true()* functions.
 
 ---
 
@@ -648,7 +657,8 @@ object for text render.
 
 **Variables:**
 - text (str) <br> string that will be drawn. cannot have any esc commands. does not support \\n (next line).
-- font (pygame.font.Font) <br> font that will be used to draw text. Initially is "Consolas", px =30 font. 
+- font (pygame.font.Font) <br> font that will be used to draw text. Initially is "Consolas". 
+- font_size (int) <br> font size that will be used. Initially is 32 px.
 
 ### LabelComponent.draw()
 LabelComponent.draw() -> None
@@ -672,6 +682,7 @@ object for textures' render.
 - [draw()](#spritecomponentdraw)
 - [get_by_nickname()](#spritecomponentget_by_nickname)
 - [is_downloaded()](#spritecomponentis_downloaded)
+- [set_default()](#spritecomponentset_default)
 <br>
 
 **Requirements:**
@@ -703,6 +714,7 @@ object for textures' render.
 
 **Static Variables:**
 - downloaded (dict\[str, pygame.Surface]) <br> to prevent the load of the same texture multiple times, the downloaded textures are stored in static veriable.
+- default (str) <br> default sprite *nickname* that will be used if sprite is not found by path or/and nickname
 
 ### SpriteComponent.draw()
 SpriteComponent.draw() -> None
@@ -715,6 +727,10 @@ Static method. returns Surface of sprite by the nickname.
 ### SpriteComponent.is_downloaded()
 SpriteComponent.is_downloaded(nickname: str = None, path: str = None) -> bool
 Static method. returns whether texture given by either nickname or path is downloaded.
+
+### SpriteComponent.set_default()
+SpriteComponent.set_default(nickname: str = "") -> None
+Static method. sets *default* static variable to given.
 
 > [!NOTE]
 > Either nickname or path should be given. not both, not none. 
@@ -833,6 +849,11 @@ enables interaction with text input.
 - text (str) <br> the text that is shown.
 - font (pygame.font.Font) <br> the font that will be used to render the text.
 - active (bool) <br> flag. shows whether or not the keyboard input is captured.
+- backspace_flag (bool) <br> flag. shows if backspace is pressed or not.
+- backspace_timer (int) <br> shows how long the backspace key is pressed **in ticks**
+
+**Static Variables:**
+- backspace_cooldown: (int) = 10 <br> how many ticks must past to delete a character.
 
 ### EntryComponent.iteration()
 EntryComponent.iteration() -> None

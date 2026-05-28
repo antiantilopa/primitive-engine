@@ -5,6 +5,8 @@ from .surface import SurfaceComponent
 
 class SpriteComponent(Component):
     downloaded: dict[str, pg.Surface] = {}
+    default: str = None
+
     texture: pg.Surface
     size: Vector2d
     frame: int
@@ -20,12 +22,20 @@ class SpriteComponent(Component):
         elif nickname != "" and (prenickname + nickname) in SpriteComponent.downloaded:
             self.texture = SpriteComponent.downloaded[(prenickname + nickname)]
         else:
-            if nickname != "":
-                SpriteComponent.downloaded[(prenickname + nickname)] = pg.image.load(path)
-                self.texture = SpriteComponent.downloaded[(prenickname + nickname)]
-            else:
-                SpriteComponent.downloaded[path] = pg.image.load(path)
-                self.texture = SpriteComponent.downloaded[path]
+            try:
+                if nickname != "":
+                    SpriteComponent.downloaded[(prenickname + nickname)] = pg.image.load(path)
+                    self.texture = SpriteComponent.downloaded[(prenickname + nickname)]
+                else:
+                    SpriteComponent.downloaded[path] = pg.image.load(path)
+                    self.texture = SpriteComponent.downloaded[path]
+            except Exception as e:
+                if SpriteComponent.default is not None:
+                    self.texture = SpriteComponent.downloaded[(prenickname + SpriteComponent.default)]
+                    print(f"Failed to load texture from path: {path} with nickname: {nickname}. Using default texture instead.")
+                    print(e)
+                else:
+                    raise Exception(f"Failed to load texture from path: {path} with nickname: {nickname}, and no default texture set.") from e
         self.frame = frame
         self.start_frame_pos = start_frame_pos
         self.frames_number = frames_number
@@ -62,3 +72,7 @@ class SpriteComponent(Component):
         if nickname is not None:
             prenickname = ":"
             return (prenickname + nickname) in SpriteComponent.downloaded
+        
+    @staticmethod
+    def set_default(nickname: str = ""):
+        SpriteComponent.default = nickname

@@ -4,6 +4,7 @@ from .camera import Camera
 from .transform import Transform
 from .vmath_mini import Vector2d
 import pygame as pg
+from typing import Callable
 
 pg.init()
 pg.font.init()
@@ -11,6 +12,8 @@ pg.mixer.init()
 
 class Engine:
 
+    funcs_per_tick: list[Callable] = []
+    
     def __init__(self, window_size: Vector2d|tuple[int, int] = Vector2d(0, 0)):
         if not isinstance(window_size, Vector2d):
             window_size = Vector2d.from_tuple(window_size)
@@ -31,7 +34,8 @@ class Engine:
             for event in pg.event.get(eventtype=pg.QUIT):
                 if event.type == pg.QUIT:
                     run = False
-
+            for func in self.funcs_per_tick:
+                func()
             self.iteration()
             pg.event.clear()
 
@@ -136,3 +140,7 @@ class Engine:
     def set_debug(value: bool):
         global DEBUG
         DEBUG = value
+
+    @staticmethod
+    def set_func_per_tick(func: Callable):
+        Engine.funcs_per_tick.append(func)
