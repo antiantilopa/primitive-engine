@@ -1,3 +1,5 @@
+import time
+
 from .game_object import GameObject, Component, DEBUG
 from .surface import SurfaceComponent
 from .camera import Camera
@@ -6,15 +8,12 @@ from .vmath_mini import Vector2d
 import pygame as pg
 from typing import Callable
 
-pg.init()
-pg.font.init()
-pg.mixer.init()
-
 class Engine:
 
     funcs_per_tick: list[Callable] = []
     
     def __init__(self, window_size: Vector2d|tuple[int, int] = Vector2d(0, 0)):
+        Engine.init()
         if not isinstance(window_size, Vector2d):
             window_size = Vector2d.from_tuple(window_size)
         GameObject.root.add_component(Transform(Vector2d(0, 0)))
@@ -22,11 +21,19 @@ class Engine:
         GameObject.root.get_component(SurfaceComponent).pg_surf = pg.display.set_mode(GameObject.root.get_component(SurfaceComponent).pg_surf.get_size())
         GameObject.root.add_child(Camera)
 
+    @staticmethod
+    def init():
+        pg.init()
+        pg.font.init()
+        pg.mixer.init()
+        pg.key.start_text_input()
+
     def run(self, fps = 20):
         run = True
         clock = pg.time.Clock()
 
         self.first_iteration()
+        self.iteration()
         self.forced_blit()
 
         while run:
@@ -37,8 +44,9 @@ class Engine:
             for func in self.funcs_per_tick:
                 func()
             self.iteration()
-            pg.event.clear()
 
+            # TODO draw queue. checkin who needs draw is too exhausting. need draw queue
+            #      if queue is ordered in such a way that oncomers are drawn before, it should help a lot.
             self.draw()
 
             self.refresh()
@@ -118,7 +126,6 @@ class Engine:
         Camera.need_blit = False
     
     def forced_blit(self):
-        self.iteration()
         for g_obj in GameObject.objs:
             g_obj.draw()
             g_obj.need_draw = False

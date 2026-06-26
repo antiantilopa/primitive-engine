@@ -12,3 +12,4 @@ from .sprite import SpriteComponent
 from .entry import EntryComponent
 from .transform import Transform
 from .vmath_mini import Vector2d, VectorRange, Angle
+from .sound import SoundComponent

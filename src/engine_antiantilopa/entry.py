@@ -2,8 +2,6 @@ from .game_object import Component
 from .label import LabelComponent
 import pygame as pg
 
-pg.key.start_text_input()
-
 class EntryComponent(LabelComponent):
     active: bool
     backspace_flag: bool
@@ -47,3 +45,9 @@ class EntryComponent(LabelComponent):
         self.text = ""
         self.game_object.need_draw = True
         self.game_object.need_blit_set_true()
+    
+    @staticmethod
+    def refresh():
+        pg.event.clear(eventtype=pg.TEXTINPUT)
+        pg.event.clear(eventtype=pg.KEYDOWN)
+        pg.event.clear(eventtype=pg.KEYUP)

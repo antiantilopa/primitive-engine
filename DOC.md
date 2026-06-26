@@ -62,10 +62,15 @@ e.run()
 - [Animation Component](#animation-component)
 - [Animation Object](#animation-object)
 - [Entry Component](#entry-component)
+- [Sound Component](#sound-component)
 - [Camera](#camera)
 - [Vector Math](#vector-math)
 - - [Vector2d](#vector2d)
 - - [Angle](#angle)
+- [Synthesizer](#synthesizer)
+- - [Linear Envelope](#linear-envelope)
+- - [Note](#note)
+- - [Synths](#synths)
 ---
 
 # Engine
@@ -74,6 +79,7 @@ main object of programm
 > Engine() -> Engine
 > Engine(window_size: Vector2d) -> Engine
 
+- [init()](#engineinit)
 - [draw()](#enginedraw)
 - [first_iteration()](#enginefirst_iteration)
 - [iteration()](#engineiteration)
@@ -96,6 +102,10 @@ The *Engine* class gathers and launches all code at once. Default init creates w
 
 **Static Variables:**
 - funcs_per_tick (list\[Callable]) <br> list of functions that will be called every game tick.
+
+### Engine.init()
+Engine.init() -> None
+Static method. Calls pygame initializations (pygame init, font init, mixer init, keyboard input init, and so on). Must be called before everything else
 
 ### Engine.first_iteration()
 Engine.first_iteration() -> None
@@ -181,8 +191,8 @@ The *GameObject* class is a kind of container for [components](#component). It c
 
 **Static Variables:**
 - root ([GameObject](#game-object)) <br> root game object representing screen. all gameobject have to be chained to it to be drawn. 
-- objs (list\[[GameObject](#game-object)]) <br> all initialized game objects list. Initially empty
-- group_tag_dict (dict\[str, [GameObject](#game-object)]) <br> dictionary of tags to game objects. Initially empty.
+- objs (list\[[GameObject](#game-object)]) <br> all initialized game objects list. Initially empty `[]`
+- group_tag_dict (dict\[str, [GameObject](#game-object)]) <br> dictionary of tags to game objects. Initially empty `{}`.
 
 ### GameObject.get_group_by_tag()
 GameObject.get_group_by_tag(tag: str) -> list\[[GameObject](#game-object)]
@@ -207,10 +217,16 @@ binds given game object to the game object
 ### GameObject.get_component()
 GameObject.get_component(component_type: type\[T]) -> T
 returns component of a given type. If there is no such, Key error exception is raised
+> [!Note]
+> example: `game_object.get_component(Component) -> Component()`
+> pass as an argument the type itself, and get its instance if it exists.
 
 ### GameObject.contains_component()
 GameObject.contains_component(component_type: type\[T]) -> bool
 checks if the game object has component of given type.
+> [!Note]
+> example: `game_object.get_component(Component) -> bool()`
+> pass as an argument the type itself, and get result as boolean.
 
 ### GameObject.get_childs()
 GameObject.get_childs(tag: str) -> list\[[GameObject](#game-object)]
@@ -276,25 +292,28 @@ base class for other components in game. Not used directly.
 **Static Variables:**
 - component_classes (list\[type\[Component]]) <br> list of all classes that inherited from Component
 
+> [!WARNING]
+> overwriten `__init_subclass__` in Component's child classes should call `Component.__init_subclass__`, or implement its work.
+
 ### Component.first_iteration()
 Component.first_iteration() -> None
-does nothing
+Virtual method. Will be called when the engine starts, or if game object *need_first_iteration* is True
 
 ### Component.iteration()
 Component.iteration() -> None
-does nothing
+Virtual method. Will be called every tick.
 
 ### Component.draw()
 Component.draw() -> None
-does nothing
+Virtual method. Will be called when game object *need_draw* is True
 
 ### Component.refresh()
 Component.refresh() -> None
-Static method. does nothing
+Static method. Virtual method. Will be called every tick
 
 ### Component.destroy()
 Component.destroy() -> None
-does nothing
+Virtual method. Will be called when game object that has this component is destroyed
 
 ---
 
@@ -319,6 +338,9 @@ object for representing position and rotation in 2 dimensions.
 - pos (Vector2d) <br> position of the **center** of the game object.
 - rotation (Angle | float) <br> angle of the gameobject. ***Not working now!!!***
 
+> [!WARNING]
+> as it is stated above, angles and rotations are not fully implemented in the code. Using them is not safe, and can cause exceptions, or unpredictable behavior.
+
 **Returns:**
 - newly created *Transform* object.
 
@@ -326,7 +348,7 @@ object for representing position and rotation in 2 dimensions.
 - pos (Vector2d) <br> position of the **center** of the game object relative to its parent's **center**.
 - abs_pos (Vector2d) <br> position of **center** of the game object relative to main screen's **center**.
 - rotation (Angle) <br> angle of the gameobject.
-- changed (bool) <br> flag variable. Shows whether Trnasform has changed. Initially False
+- changed (bool) <br> flag variable. Shows whether Trnasform has changed. Initially `False`
 
 **Static Variables:**
 - objs (list\[Transform]) <br> list of all Transform instances.
@@ -346,7 +368,6 @@ Changes *rotation* with given delta. **Not working now !!!**
 ### Transform.set_pos()
 Transform.set_pos(pos: Vector2d) -> None
 Sets *pos* equal to pos, sets *changed* equal to True. Calls [need_blit_set_true()](#gameobjectneed_blit_set_true) for the game object. Calls *update_abs_pos()* for self.
-
 
 ### Transform.set_rotation()
 Transform.set_rotation(rotation: Angle) -> None
@@ -381,8 +402,8 @@ object for representing surface where everything is drawn.
 
 **Arguments:**
 - size (Vector2d) <br> size of surface and game object.
-- crop (bool) <br> flag variable. shows whether or not the surface should be cropped by parent surface. Initially True.
-- layer (int) <br> the layer of the surface. Initially 1
+- crop (bool) <br> flag variable. shows whether or not the surface should be cropped by parent surface. Initially `True`.
+- layer (int) <br> the layer of the surface. Initially `1`
 
 > [!WARNING]
 > layer variable should not be negative. if layer is negative, some functions may not work!
@@ -399,7 +420,7 @@ object for representing surface where everything is drawn.
 - layer (int) <br> the layer of the surface. higher the layer variable, higher the surface will be. 
 
 > [!NOTE]
-> the layer do not affect game objects that has different parent. If two objects with the same parent have the same layer variable, the overlay will be hardly determined! 
+> the layer do not affect game objects that has different parent. If two objects with the same parent have the same layer variable, the overlay may be unpredictable! 
 
 ### SurfaceComponent.first_iteration()
 SurfaceComponent.first_iteration() -> None
@@ -420,7 +441,7 @@ Inserts given game object in *oncoming* so that list is sorted according to thei
 > [!NOTE]
 > the rich compare function for insort of game objects is: 
 > \[depth - \frac{1}{1 + layer}\] 
-> it can be seen that if layer is negative, then the fraction will be more than 1, thus it will overshadow depth difference. though, nothing stops layer from being a fraction > 0.
+> it can be seen that if layer is negative, then the fraction will be more than 1, thus it will overshadow depth difference. though, nothing stops layer from being a fractionan number more than 0.
 
 ### SurfaceComponent.remove_oncoming()
 SurfaceComponent.remove_oncoming(g_obj: [GameObject](#game-object)) -> None
@@ -429,7 +450,6 @@ Removes given game object from *oncoming* if it was there.
 ### SurfaceComponent.destroy()
 SurfaceComponent.destroy() -> None
 calls remove_oncoming(self) for game object's Surface component to which the surface would have been blit on.
-
 
 ---
 
@@ -440,17 +460,15 @@ object for representation of color in RGB.
 > ColorComponent(color: tuple\[int, int, int]) -> ColorComponent
 
 **Arguments:**
-- color (tuple\[int, int, int]) <br> RGB color of game object. each number must be in range (0, 256).
+- color (tuple\[int, int, int]) <br> RGB color of game object. each number must be in range `[0, 255]`.
 
 **Returns:**
 - newly created *ColorComponent* object.
 
 **Variables:**
-- color (tuple\[int, int, int]) <br> RGB color of game object. each number must be in range (0, 256).
+- color (tuple\[int, int, int]) <br> RGB color of game object. each number must be in range `[0, 255]`.
 
 **Static Variables:**
-- FUCKING_BLACKEST_NIGGER = (-2\*\*32 + 1, -2\*\*32 + 1, -2\*\*32 + 1)
-
 - BLACK = (0, 0, 0)
 - WHITE = (255, 255, 255)
 - RED = (255, 0, 0)
@@ -474,14 +492,17 @@ base object for representing various shapes.
 - [Transform Component](#transform)
 
 **Arguments:**
-- collide_formula (Callable\[\[Vector2d], bool]) <br> formula which will return whether given Vector2d lies in a shape if its center is at \<0, 0\>.
+- collide_formula (Callable\[\[Vector2d], bool]) <br> formula which will return whether given point lies in a shape if its center is at `<0, 0>`.
+
+> [!NOTE]
+> for example, collide formula for circle with some radius is `lambda: point, point.lenght() < radius` here, the tranform of the object should *not* be taken into consideration.
 
 **Returns:**
 - newly created *ShapeComponent* object.
 
 ### ShapeComponent.does_collide()
 ShapeComponent.does_collide(pos: Vector2d) -> bool
-check if given Vector2d lies in a shape centered in transform.
+Virtual method. Checks if given point lies in a shape centered in transform.
 
 ---
 
@@ -501,7 +522,7 @@ represent circle shape.
 
 **Arguments:**
 - radius (float) <br> radius of issued circle shape
-- need_draw (bool) <br> will the circle be drawn or not. Initially True
+- need_draw (bool) <br> will the circle be drawn or not. Initially `True`
 
 **Returns:**
 - newly created *CircleShapeComponent* object.
@@ -536,7 +557,7 @@ represent rectangle shape.
 
 **Arguments:**
 - size (Vector2d) <br> width and height of issued rectangle shape
-- need_draw (bool) <br> will the rectangle be drawn or not. Initially True
+- need_draw (bool) <br> will the rectangle be drawn or not. Initially `True`
 
 **Returns:**
 - newly created *RectShapeComponent* object
@@ -557,7 +578,8 @@ if need_draw is True and game object contains [Color Component](#color-component
 
 # On Click Component
 Child class of [Component](#component).
-object for listening for mouse clicks and responding to them.
+object for mouse clicks listening and response.
+
 > OnClickComponent(listen: tuple\[bool, bool, bool], listen_for_hold: bool, on_press: bool, cmd: Callable\[\[[GameObject](#game-object), tuple\[bool, bool, bool], Vector2d,  list\[Any]], None], *args: list\[Any], active: bool = False) -> OnClickComponent
 
 - [iteration()](#onclickcomponentiteration)
@@ -573,7 +595,7 @@ object for listening for mouse clicks and responding to them.
 - listen_for_holds (bool) <br> boolean representing should it be triggered by mouse buttons changes (False) or it being held (True).
 - on_press (bool) <br> boolean representing should it be triggered by mouse button release (False) or mouse button push (True). Does not affect if listen_for_holds is True
 - cmd (Callable\[\[[GameObject](#game-object), tuple\[bool, bool, bool], Vector2d,  list\[Any]], None]) <br> callable function which will be called when mouse button pressed and all requirements satisfied. First argument - game object whose OnliclkComponent was triggered; Second argument - tuple\[bool, bool, bool] which mouse button (left, center or right) triggered OnliclkComponent; Third argument - Vector2d position of mouse relative to the center of the game object 
-- *args (list\[Any]) <br> arguments that will be given to cmd function. Initially empty
+- *args (list\[Any]) <br> arguments that will be given to cmd function. Initially `[]`
 - active (bool) <br> flag. if false, iteration will not run
 
 **Returns:**
@@ -600,7 +622,7 @@ gets absolute position on actual screen/display and returns position relative to
 
 # Key Bind Component
 Child class of [Component](#component).
-object for listening for keyboard clicks and responding to them.
+object for keyboard clicks listening and responce.
 > KeyBindComponent(listen: tuple\[int], listen_for_hold: bool, on_press: bool,  cmd: Callable\[\[[GameObject](#game-object), tuple\[int], list\[Any]], None], *args: list\[Any], active: bool = True) -> KeyBindComponent
 
 - [iteration()](#keybindcomponentiteration)
@@ -611,7 +633,7 @@ object for listening for keyboard clicks and responding to them.
 - listen_for_holds (bool) <br> boolean representing should it be triggered by keyboard keys changes (False) or they being held (True).
 - on_press (bool) <br> boolean representing should it be triggered by keyboard keys releases (False) or their pushes (True). Does not affect if listen_for_holds is True
 - cmd (Callable\[\[[GameObject](#game-object), tuple\[int], list\[Any]], None]) <br> callable function which will be called when keyboard keys pressed and all requirements satisfied. First argument - game object whose KeyBindComponent was triggered; Second argument - tuple\[int] which keyboard keys (according to pygame keys indexation) triggered KeyBindComponent.
-- *args (list\[Any]) <br> arguments that will be given to cmd function. Initially empty
+- *args (list\[Any]) <br> arguments that will be given to cmd function. Initially `[]`
 - active (bool) <br> flag. if false, iteration will not run
 
 **Returns:**
@@ -650,15 +672,15 @@ object for text render.
 
 **Arguments:**
 - text (str) <br> string that will be drawn. cannot have any esc commands. does not support \\n (next line).
-- font (pygame.font.Font) <br> font that will be used to draw text. Initially is "Consolas" font.
+- font (pygame.font.Font) <br> font that will be used to draw text. Initially system font `"Consolas"` with size `32`.
 
 **Returns:**
 - newly created *LabelComponent* object.
 
 **Variables:**
 - text (str) <br> string that will be drawn. cannot have any esc commands. does not support \\n (next line).
-- font (pygame.font.Font) <br> font that will be used to draw text. Initially is "Consolas". 
-- font_size (int) <br> font size that will be used. Initially is 32 px.
+- font (pygame.font.Font) <br> font that will be used to draw text. Initially system font `"Consolas"`. 
+- font_size (int) <br> font size in pixels that will be used. Initially `32`.
 
 ### LabelComponent.draw()
 LabelComponent.draw() -> None
@@ -692,11 +714,11 @@ object for textures' render.
 - path (str) <br> relative or full path of needed texture. if not found, pygame error will rise up. 
 - size (Vector2d) <br> **needed** size of the sprite. if the texture has different size than given it (sprite, not texture) will be reshaped.
 - nickname (str) <br> the name to call downloaded texture. 
-- frame (int) <br> the index of needed frame. Initially 0.
-- frames_number (int) <br> the number of frames. Initially 1.
-- start_frame_pos (Vector2d) <br> the position of left top part of needed sprite sheet. Initially \<0, 0>.
-- frame_direction (Vector2d) <br> the direction in which the frames go. Initially \<1, 0>.
-- frame_size (Vector2d) <br> the size of the frame. Initially \<-1, -1>.
+- frame (int) <br> the index of needed frame. Initially `0`.
+- frames_number (int) <br> the number of frames. Initially `1`.
+- start_frame_pos (Vector2d) <br> the position of left top part of needed sprite sheet. Initially `<0, 0>`.
+- frame_direction (Vector2d) <br> the direction in which the frames go. Initially `<1, 0>`.
+- frame_size (Vector2d) <br> the size of the frame. Initially `<-1, -1>`.
 
 **Returns:**
 - newly created *SpriteComponent* object.
@@ -764,12 +786,12 @@ object for animations' render.
 - anim_obj ([Animationobject](#animation-object)) <br> an animation object. stores data about animation.
 - frames (list\[pygame.Surface]) <br> all frame images in needed order.
 - tpf (int) <br> ticks per frame. measures how many ticks should pass between two frames.
-- _tick (int) <br> how many ticks has passed since last frame was drawn. from 0 to *tpf - 1*. Initially 0.
-- _frame (int) <br> which frame was last drawn. from 0 to *len(frames) - 1*. Initially 0.
-- _stop (bool) <br> has the animation stopped. Initially False.
-- _back (bool) <br> is animation going back. Initially False.
-- _on_stop (Callable) <br> function that will be called when animation is finished. Initially *lambda:0*.
-- _args (list) <br> arguments provided to *_on_stop* function. Initially \[].
+- _tick (int) <br> how many ticks has passed since last frame was drawn. from 0 to *tpf - 1*. Initially `0`.
+- _frame (int) <br> which frame was last drawn. from 0 to *len(frames) - 1*. Initially `0`.
+- _stop (bool) <br> has the animation stopped. Initially `False`.
+- _back (bool) <br> is animation going back. Initially `False`.
+- _on_stop (Callable) <br> function that will be called when animation is finished. Initially `lambda: 0`.
+- _args (list) <br> arguments provided to *_on_stop* function. Initially `[]`.
 
 **Static Variables:**
 - downloaded (dict\[str, [Animationobject](#animation-object)]) <br> stores all loaded animation objects.
@@ -858,12 +880,98 @@ enables interaction with text input.
 ### EntryComponent.iteration()
 EntryComponent.iteration() -> None
 Uses pygame events to get text input, and stores it in *text* variable. Captures *KeyDown* events to catch backspaces. 
-> [!Note]
+> [!NOTE]
 > Backspace deletes only one character, no matter how long is held!
 
 ### EntryComponent.clear()
 EntryComponent.clear() -> None
 Sets text equal to empty string, *need_draw* to true, and calls [*need_blit_set_true()*](#gameobjectneed_blit_set_true) method
+
+---
+
+# Sound Component
+Child class of [Component](#component).
+enables interaction with sound loading, storing, and playing.
+> EntryComponent(path: str|Path = None, nickname: str = None, volume: float = 1, tone_offset: int = 0, on_end: Callable = lambda: None, is_music: bool = False)
+
+- [set_volume()](#soundcomponentset_volume)
+- [load()](#soundcomponentload)
+- [get_loaded_sound()](#soundcomponentget_loaded_sound)
+- [is_downloaded()](#soundcomponentis_downloaded)
+- [play_once()](#soundcomponentplay_once)
+- [play_in_loop()](#soundcomponentplay_in_loop)
+- [stop_channel()](#soundcomponentstop_channel)
+- [stop_all_channels()](#soundcomponentstop_all_channels)
+- [refresh()](#soundcomponentrefresh)
+<br>
+
+**Requirements:**
+
+None
+
+**Arguments:**
+- path (str|Path) <br> path to sound folder. If none is given searches for preloaded sound by nickname. Initially `None`
+- nickname (str) <br> nickname of the sound. If none is given loads
+searches for preloaded sound by path, or loads sound by path. If both nickname and path are given, loads sound from path, and saves it as given nickname. **will load sound even if it was preloaded by path or nickname was taken!** Initially `None`
+- volume (float) <br> volume of the sound. Values more than 1 or less than -1 will result in overdrive. Initially `1`
+- tone_offset (int) <br> tone offset of the sound. 12 means full octave higher. Negative values will put the frequencies lower. Initially `0`
+- on_end (Callable[[], None]) <br> function that will be called when the sound stops playing. Initially `lambda: None`
+- is_music (bool) <br> is this a music or a sound (for volume change etc.) Initially `False`
+
+**Returns:**
+- newly created *SoundComponent* object.
+
+**Variables:**
+- path (Path) <br> path to sound folder.
+- nickname (str) <br> nickname of the sound.
+- volume (float) <br> volume of the sound.
+- tone_offset (int) <br> tone offset of the sound. 12 means full octave higher.
+- on_end (Callable[[], None]) <br> function that will be called when the sound stops playing.
+- is_music (bool) <br> is this a music or a sound (for volume change etc.)
+- sound (pygame.mixer.Sound) <br> the sound in pygame.mixer.Sound type.
+- channels (list\[pg.mixer.Channel]) <br> the channels that are currently playing.
+- _event_type (int) <br> type of pygame.Event that will rise when one of the channels stops playing.
+
+**Static Variables:**
+- loaded_by_path: (dict\[Path, pg.mixer.Sound]) = {} <br> loaded sounds stored by paths.
+- path_by_nickname (dict\[str, Path]) = {} <br> loaded paths stored by nicknames. 
+- instances (list\[SoundComponent]) = [] <br> all instances of the *SoundComponent*.
+
+### SoundComponent.set_volume()
+SoundComponent.set_volume(volume: float) -> None
+Sets volume variable equal to given, and sets volume of channels that already started to play. 
+
+### SoundComponent.load()
+SoundComponent.load(path: str|Path) -> pg.mixer.Sound
+Loads the sound using config.json file in given folder.
+
+### SoundComponent.get_loaded_sound()
+SoundComponent.get_loaded_sound(nickname: str) -> pg.mixer.Sound
+Static method. Searches for sound by nickname.
+
+### SoundComponent.is_downloaded()
+SoundComponent.is_downloaded(nickname: str = None, path: Path|str = None) -> bool
+Static method. Requires only one of them, *nickname* or *path* be given. Checks if there is sound with given nickname or path.
+
+### SoundComponent.play_once()
+SoundComponent.play_once() -> pg.mixer.Channel
+starts playing the sound in a new channel, that will eventually stop. Stores the channel in *channels* and returns it.
+
+### SoundComponent.play_in_loop()
+SoundComponent.play_in_loop() -> pg.mixer.Channel
+Starts playing the sound in a new channel, that will play until it is stopped. Stores the channel in *channels* and returns it.
+
+### SoundComponent.stop_channel()
+SoundComponent.stop_channel(channel: pg.mixer.Channel) -> None
+if given channel is in *channels*, will remove it from there, and call `channel.stop()`.
+
+### SoundComponent.stop_all_channels()
+SoundComponent.stop_all_channels() -> None
+for channel in *channels* will call `channel.stop()`, then clear the *channels* list.
+
+### SoundComponent.refresh()
+SoundComponent.refresh() -> None
+Static method. Implementation of `Component.refresh()`. it is called once per tick (not once for all instances, just once). checks if channels stopped playing, and if so, removes them from *channels* and calls *on_end* function.
 
 ---
 
@@ -915,8 +1023,8 @@ Class to represent a pair of floats.
 <br>
 
 **Arguments:**
-- x (float) <br> float representing x coordinate. Default 0
-- y (float) <br> float representing y coordinate. Default 0
+- x (float) <br> float representing x coordinate. Initially `0`
+- y (float) <br> float representing y coordinate. Initially `0`
 
 **Returns:**
 - newly created *Vector2d* object.
@@ -926,17 +1034,17 @@ Class to represent a pair of floats.
 - y (float) <br> float representing y coordinate
 
 **Operations:**
-- **addition**:<br> Vector2d(a, b) + Vector2d(c, d) -> Vector2d(a + c, b + d)
-- **substraction**:<br> Vector2d(a, b) - Vector2d(c, d) -> Vector2d(a - c, b - d)
-- **multiplication**:<br> Vector2d(a, b) * Vector2d(c, d) -> Vector2d(a * c, b * d) <br> Vector2d(a, b) * c -> Vector2d(a * c, b * c)
-- **true division**:<br> Vector2d(a, b) / Vector2d(c, d) -> Vector2d(a / c, b / d) <br> Vector2d(a, b) / c -> Vector2d(a / c, b / c) 
-- **floor division**:<br> Vector2d(a, b) // Vector2d(c, d) -> Vector2d(a // c, b // d) <br> Vector2d(a, b) // c -> Vector2d(a // c, b // c)
-- **module division**:<br> Vector2d(a, b) % Vector2d(c, d) -> Vector2d(a % c, b % d) <br> Vector2d(a, b) % c -> Vector2d(a % c, b % c)
-- **is equal**:<br> Vector2d(a, b) == Vector2d(c, d) -> (a == c) and (b == d)
-- **is not equal**:<br> Vector2d(a, b) != Vector2d(c, d) -> (a != c) or (b != d)
-- **get item**:<br> Vector2d(a, b)\[i] -> (a, b)\[i]
+- **addition**:<br> `<a, b> + <c, d> -> <a + c, b + d>`
+- **substraction**:<br> `<a, b> - <c, d> -> <a - c, b - d>`
+- **multiplication**:<br> `<a, b> * <c, d> -> <a * c, b * d>` <br> `<a, b> * c -> <a * c, b * c>`
+- **true division**:<br> `<a, b> / <c, d> -> <a / c, b / d>` <br> `<a, b> / c -> <a / c, b / c>`
+- **floor division**:<br> `<a, b> // <c, d> -> <a // c, b // d>` <br> `<a, b> // c -> <a // c, b // c>`
+- **module division**:<br> `<a, b> % <c, d> -> <a % c, b % d>` <br> `<a, b> % c -> <a % c, b % c>`
+- **is equal**:<br> `<a, b> == <c, d>` $\iff$ `(a == c) and (b == d)`
+- **is not equal**:<br> <br> `<a, b> != <c, d>` $\iff$ `(a != c) and (b != d)`
+- **get item**:<br> `<a, b>[i] -> (a, b)[i]`
 > [!NOTE]
-> when getting items, index i must be 0 or 1
+> when getting items, index i must be 0 or 1. -Vector is not implemented, multiply by -1. multiplication by constant is both sided. dividing constant by a vector is an error.
 
 ### Vector2d.from_tuple()
 Vector2d.from_tuple(tpl: tuple\[float, float]) -> Vector2d
@@ -959,15 +1067,15 @@ length<sup>2</sup> = x<sup>2</sup> + y<sup>2</sup>
 ### Vector2d.norm()
 Vector2d.norm() -> Vector2d
 returns normalized (length = 1) Vector2d with same direction.
-if Vector2d is **0**, returns **0**
+returns `0` if and only if Vector2d is `<0, 0>`
 
 ### Vector2d.intx()
 Vector2d.intx() -> int
-returns int(x)
+returns `int(x)`
 
 ### Vector2d.inty()
 Vector2d.inty() -> int
-returns int(y)
+returns `int(y)`
 
 ### Vector2d.to_angle()
 Vector2d.to_angle() -> Angle
@@ -975,7 +1083,7 @@ returns angle of vector using arc tangent.
 
 ### Vector2d.rounded()
 Vector2d.rounded(ndigits: int = None) -> Vector2d
-returns Vector with x and y rounded to given n digits.
+returns Vector with *x* and *y* rounded to given *n* digits.
 
 ### Vector2d.fast_reach_test()
 Vector2d.fast_reach_test(other: Vector2d, dist: float) -> bool
@@ -989,6 +1097,21 @@ returns plane quarter of vector.
 | ----- | ----- |
 | **3** | **4** |
 
+> [!NOTE]
+> if vector is `<0, 0>` returns 1.
+> if x equals 0, prioritizes 1 over 2; 4 over 3
+> if y equals 0, prioritizes 1 over 4; 3 over 2.
+> examples:
+> `<0, 0> -> 1`
+> `<1, 1> -> 1`
+> `<-1, 1> -> 2`
+> `<-1, -1> -> 3`
+> `<1, -1> -> 4`
+> `<0, 1> -> 1`
+> `<0, -1> -> 4`
+> `<1, 0> -> 1`
+> `<-1, 0> -> 3`
+
 ### Vector2d.is_in_box()
 Vector2d.is_in_box(other1: Vector2d, other2: Vector2d) -> bool
 returns True if **self** is in rect such that **other1** and **other2** are corners.
@@ -999,14 +1122,16 @@ returns True if both *x* and *y* variables are integers.
 
 ### Vector2d.complex_multiply()
 Vector2d.complex_multiply(other: Vector2d) -> Vector2d
-multiplies vectors as if Vector2d(a, b) = a + bi.
+multiplies vectors as if `<a, b> = a + bi`.
 resulting **vector**'s length is product of **self** and **other** lengths.
 resulting **vector**'s angle is sum of **self** and **other** angles.
+`<a, b> x <c, d> -> <ac - bd, ad + bc>`
 
 ### Vector2d.dot_multiply()
 Vector2d.dot_multiply(other: Vector2d) -> float
 returns value of dot multiplication of vectors.
 resulting value is product of **self** and **other** lengths with cosine of angle between **self** and **other**.
+`<a, b> . <c, d> -> ac + bd`
 
 ### Vector2d.operation()
 Vector2d.operation(other: Vector2d, operation: Callable\[\[float, float], float]) -> Vector2d
@@ -1024,9 +1149,9 @@ class to represent a range of gaussean (integer) vectors.
 <br>
 
 **Arguments:**
-- start (Vector2d) <br> start vector of the range. Initially Vector2d(0, 0).
+- start (Vector2d) <br> start vector of the range. Initially `<0, 0>`.
 - end (Vector2d) <br> end vector of the range.
-- step (Vector2d) <br> step vector of the range. Initially Vector2d(1, 1).
+- step (Vector2d) <br> step vector of the range. Initially `<1, 1>`.
 > [!NOTE]
 > All arguments must be gausseans, and it must be possible to get from start to end using *step* * *k* where k is gaussean, k.x > 0, and k.y > 0
 
@@ -1049,7 +1174,7 @@ class to represent a range of gaussean (integer) vectors.
 > | ----- | ----- | ----- |
 > | **3** | **4** | **5** |
 > 
-> the order will be: <0, 0>, <1, 0>, <2, 0>, <0, 1>, <1, 1>, <2, 1>
+> the order will be: `<0, 0>, <1, 0>, <2, 0>, <0, 1>, <1, 1>, <2, 1>`
 
 
 ---
@@ -1068,7 +1193,7 @@ class that represent angles in radians.
 <br>
 
 **Arguments:**
-- angle (float) <br> angle in radians. Default 0
+- angle (float) <br> angle in radians. Initially `0`
 
 **Returns:**
 - newly created *Angle* object.
@@ -1095,6 +1220,199 @@ module divides angle by 2pi
 ### Angle.toVector2d()
 Angle.to_vector2d() -> Vector2d
 returns Vector2d with length equal to 1 and direction equal to angle
+
+---
+
+# Synthesizer
+
+Synthesizer is a module used for sound compilation, saving, loading, and playing.  Primitive engine uses Synthesizer in only [SoundComponent](#sound-component).  
+
+# Linear Envelope
+class that represents envelope with only 5 parameters. With basic attack, decay, and release, it also uses 2 sustain levels. Envelope structure looks like that:  
+```mermaid
+---
+config:
+  themeVariables:
+    xyChart:
+      plotColorPalette: '#0000FF'
+---
+xychart-beta
+    title "Linear Envelope"
+    x-axis "time" ["attack", "attack-decay", "decay-sustain", "sustain-release", "release"]
+    y-axis "Amplitude" 0 --> 1
+    line [0, 1, 0.8, 0.7, 0]
+```
+
+> LinearEnvelope(attack: int, decay: int, sustain1: float, sustain2: float, release: int) -> LinearEnvelope
+
+- [get()](#linearenvelopeget)
+<br>
+
+**Arguments:**
+- attack (int) <br> number of *ticks* that attack will take 
+- decay (int) <br> number of *ticks* that decay will take 
+- sustain1 (float) <br> starting sustain level, to which amplitude will go to during decay. **must be between 0 and 1** 
+- sustain2 (float) <br> ending sustain level, to which amplitude will go to during sustain. **must be between 0 and 1** 
+- release (int) <br> number of *ticks* that release will take 
+
+**Returns:**
+- newly created *LinearEnvelope* object.
+
+**Variables:**
+- attack (int) <br> number of *ticks* that attack will take. *Attack* is time period when sound increases its volume from 0 to 1. Usually a rapid growth that prevents sound from strikiing.
+- decay (int) <br> number of *ticks* that decay will take. *Decay* is time period when sound decreases from 1 to *starting sustain level*. Might be longer for different effects.
+- sustain1 (float) <br> starting sustain level, to which amplitude will go to during decay. **must be between 0 and 1**. The amplitude from which sustain will start. Usually sustain is the longest section, so for listener, most of the sound is going from starting sustain to ending sustain
+- sustain2 (float) <br> *ending sustain level*, to which amplitude will go to during sustain. **must be between 0 and 1**. The amplitude to which sustain will go. Usually, is lower than *starting sustain level* to imitate sound's fading.
+- release (int) <br> number of *ticks* that release will take. *Release* is time period when sound decreases from *ending sustain level* to 0. Similar to *attack*, is rapid fall that prevents sound from strikiing.
+
+> [!NOTE]
+> 'ticks' mentioned above are **not** game ticks. The 'ticks' are synthesizer rate (which is 44100 Hz by default) 
+
+> [!NOTE]
+> sustain levels may be more than 1 or lower than 0. if sustain level becomes more than 1, it will overdrive the sound. if the sustain level is below 0, the sound amplitude will go through 0, which means it will go silent, then start playing again. if sustain level is below -1, it will overdrive the sound. 
+> though, it can be used, and will not cause exceptions.
+
+### LinearEnvelope.get()
+LinearEnvelope.get(lenght: int) -> np.ndarray
+returns np.ndarray with given lenght, according to given parameters will return envelope array (*linear chart shown above*).
+
+>[!NOTE]
+> sustain lenght is determined by substracting attack, decay, and release lenghts from given *lenght*. This means, if given lenght is lower than `attack + decay + release` it will raise an ValueException.
+
+---
+
+# Note
+
+class that represents a note in 12 note system.
+
+> Note(duration: float, tone: int, pause: bool = False) -> Note
+
+- [get_color()](#noteget_color)
+- [save_notes()](#notesave_notes)  ****! deprecated !****
+- [load_notes()](#noteload_notes) ****! deprecated !****
+- [save_notes_new()](#notesave_notes_new)
+- [load_notes_new()](#noteload_notes_new)
+<br>
+
+**Arguments:**
+- duration (float) <br> duration of the note.
+
+
+- tone (int) <br> tone of the note. 0 means 440 Hz, or A4 note.
+- pause (bool) <br> whether the note is a pause (silent) or not. Initially `False`.
+
+
+**Returns:**
+- newly created *Note* object.
+
+**Variables:**
+- duration (float) <br> duration of the note in seconds.
+>[!NOTE]
+>note duration is relative and better to be whole integer. Real duration in seconds is determined in *Synths*.
+- tone (int) <br> tone of the note. 0 means 440 Hz, or A4 note. If note is going to be saved, tone must be in range `[-48; 206]`. (determined by *minimal_tone* static variable, and lenght of range 255)
+- pause (bool) <br> whether the note is a pause (silent) or not. If true, tone will not affect anything
+
+**Static Variables:**
+- half_tone (float) <br> is set to `np.pow(2, 1/12)` which is $^{12}\sqrt{2}$. its name is '*half* tone' due to music theory naming. It is a logarithmical distance between two neighbouring tones (which means that dividing frequencies of two neighbouring tones will result in np.pow(2, 1/12)) 
+- minimal_tone (int) <br> it is set to -48 to imitate lowest note on piano. if conventions are used, can be set to any number.
+- names (tuple\[str]) <br> names of 12 notes. is equal to `("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")`
+- colors (tuple\[bool]) <br> whether a note is white on piano keyboard. 12 elements. is equal to `(1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1)`
+
+### Note.get_color()
+Note.get_color() -> bool
+returns whether the color of the note on piano keyboard is white
+
+### Note.save_notes()
+Note.save_notes(notes: list\[Note], name: str) -> None
+Static method. Saves notes in *name*.txt file. Uses note `duration/tone/pause` form. ****deprecated****
+
+### Note.load_notes()
+Note.load_notes(name: str) -> list\[Note]
+Static method. Loads notes from *name*.txt file. Uses deprecated form from *Note.save_notes*. ****deprecated****
+
+>[!WARNING]
+>deprecated methods are not tested and might not work in new versions. It is highly recomended to use not deprecated versions. 
+
+### Note.save_notes_new()
+Note.save_notes_new(notes: list\[Note], name: str) -> None
+Static method. Saves notes in given file. Uses note `duration, tone` form where each uses 1 byte. This way 255 tone is reserved for pause. duration is stored as integer. if note duration is more than 256, it will divide the note until its parts are less than 256
+
+### Note.load_notes_new()
+Note.load_notes_new(name: str) -> list\[Note]
+Static method. Loads notes from given file. Uses new form from *Note.save_notes_new*.
+
+---
+
+# Synths
+class that represents sythesizer. 
+> [!NOTE]
+> Most of its sounds should be explored by hands, as sound is hard to describe with words. Moreover, sounds can be drastically changed by reverb, convolution and envelope.
+> Thus, this section is much more subjective to authors taste and like. Feel free to change any of this sounds, add your effects or envelope types, and play around.
+
+- [play_arr()](#synthsplay_arr)
+- [save_to_wav()](#synthssave_to_wav)
+- [get_party()](#synthsget_party)
+- [merge_parties()](#synthsmerge_parties)
+- [reverb()](#synthsreverb)
+- [get_---_arr()](#synthsget_---_arr)
+- [wave names](#wave-names)
+<br>
+
+**Static Variables:**
+- rate (int) <br> the Hertz of the music. Initially `44100` Hz. 
+- seconds_per_note (floar) <br> the number of seconds per one note duration. Initially `0.4`. 
+>[!NOTE]
+>feel free to change *seconds_per_note* as much and as many times as you want 
+- cache (dict[Any, np.ndarray]) <br> inner optimisation variable that makes compiling big melodies, or loading multiple sounds faster.
+
+### Synths.play_arr()
+Synths.play_arr(arr: np.ndarray, delay: bool = True, loops = 0) -> pygame.mixer.Sound
+Static method. plays given np.ndarray as pygame sound. if delay is true, playing will stop code execution until the sound does not end playing once.
+loops means play it `loops + 1` times. if loops is negative, plays it in loop non-stop.
+
+### Synths.save_to_wav()
+Synths.save_to_wav(arr: np.ndarray, output_filename = "output_sound.wav") -> None
+Static method. saves arr in .wav file format in given file name.
+
+### Synths.get_party()
+Synths.get_party(notes: list\[Note], wave: str = "sin", tone_shift = 0, envelope: LinearEnvelope = LinearEnvelope(441, 441, 1.0, 1.0, 441)) -> np.ndarray
+Static method. Returns nd.array that is represented by *notes* with given wave, tone shift and envelope. How these works can be read in their respective parts: [note and tones](#note), [envelope](#linear-envelope).
+
+### Synths.merge_parties()
+Synths.merge_parties(*parties: list\[np.ndarray]) -> np.ndarray
+Static method. Merges given *perties* (which can be obtained in get_party() method). Sums up all *parties*, and divides by their count. *Parties* can be in different lenght in any order.
+
+### Synths.reverb()
+Synths.reverb(arr: np.ndarray, num: int, delay: int, amplitudes: list\[int]) -> np.ndarray:
+Static method. Iterates *num* times. each times uses `np.roll(arr, delay)` to reach effect of the reverb. Each new iteration multiplies to given amplitude. After, result is equalized to be in range between -1, 1
+
+
+### Synths.get_---_arr()
+Synths.get_---_arr(freq: float, duration: float = 1.5, t0: int = 0) -> np.ndarray
+Static methods. where '---' are 3 latin letters. Produces sound wave in given *frequency* with given duration. *t0* is the time (in synths ticks) when the sound will be in a party.
+
+##### wave names:
+- `'sin'` - sine wave
+- `'sqr'` - square wave
+- `'tri'` - triangle wave
+- `'saw'` - saw wave
+- `'pin'` - 8 sine waves with octave difference
+- `'pqr'` - 2 square waves with octave difference 
+- `'pri'` - 3 triangle waves with octave difference
+- `'paw'` - 2 saw waves with octave difference 
+- `'qin'` - sine wave with falling frequency, thet then rises up to given
+- `'qqr'` - square wave with falling frequency, thet then rises up to given
+- `'qri'` - triangle wave with falling frequency, thet then rises up to given
+- `'qaw'` - saw wave with falling frequency, thet then rises up to given
+- `'org'` - 15 sine waves that try to sound like organ
+- `'ovr'` - 8 sine waves with linear frequency difference
+- `'wig'` - 3 sine waves with 3 octave difference
+- `'str'` - saw wave with 2 square waves with little difference.
+- `'pia'` - a lot of sine waves with tone difference (amplitude falls linearly)
+- `'bia'` - a lot of sine waves with tone difference (amplitude falls logarithmically)
+- `'nos'` - random noise (frequency has no effect)
+- `'bom'` - random noise with (frequency change rate of random leaps, amplitude falls smoothly)
+- `'non'` - straight line, silence, zeros
 
 ---
 

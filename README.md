@@ -11,4 +11,4 @@ author:
 - [antiantilopa](https://github.com/antiantilopa)<br>
 
 
-thanks to [TAFH](https://github.com/TAFH-debug), my friend, for [pygame_tools_tafh](https://github.com/TAFH-debug/pygame_tools_tafh) that is insperation source for this package.
+thanks to [TAFH](https://github.com/TAFH-debug), my friend, for [pygame_tools_tafh](https://github.com/TAFH-debug/pygame_tools_tafh) that is inspiration source for this package.
